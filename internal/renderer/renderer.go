@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"fmt"
+	"github.com/Nurlan270/weather-go/internal/renderer/message"
 	"github.com/Nurlan270/weather-go/internal/renderer/response"
 	"html/template"
 	"net/http"
@@ -19,7 +20,6 @@ func New(templates map[string]*template.Template) *Renderer {
 
 func (r *Renderer) RenderPage(
 	w http.ResponseWriter,
-	req *http.Request,
 	page string,
 	resp response.PageResponse,
 ) error {
@@ -28,14 +28,23 @@ func (r *Renderer) RenderPage(
 
 func (r *Renderer) RenderNotFound(w http.ResponseWriter) error {
 	resp := response.ErrorPageResponse{
-		PageTitle: MessageNotFound,
-		Message:   MessageNotFound,
+		PageTitle: message.NotFound,
+		Message:   message.NotFound,
 	}
 
 	return r.render(w, http.StatusNotFound, "error", resp)
 }
 
-// low-level helper; powers other methods
+func (r *Renderer) Back(
+	w http.ResponseWriter,
+	code int,
+	page string,
+	resp response.PageResponse,
+) error {
+	return r.render(w, code, page, resp)
+}
+
+// render is low-level helper; powers other methods
 func (r *Renderer) render(
 	w http.ResponseWriter,
 	statusCode int,

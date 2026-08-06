@@ -3,28 +3,35 @@ package app
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/rest"
-	"github.com/Nurlan270/weather-go/internal/rest/controller"
 	"html/template"
 	"net/http"
+	"net/mail"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/Nurlan270/weather-go/internal/config"
 	"github.com/Nurlan270/weather-go/internal/db"
+	"github.com/Nurlan270/weather-go/internal/home"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
+	"github.com/Nurlan270/weather-go/internal/rest"
+	"github.com/Nurlan270/weather-go/internal/user"
+	"github.com/Nurlan270/weather-go/internal/validator"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	gpv "github.com/go-playground/validator/v10"
+
 	"go.uber.org/zap"
 )
 
 type App struct {
-	router   *chi.Mux
-	config   *config.Config
-	logger   *logger.Logger
-	db       *sql.DB
-	renderer *renderer.Renderer
+	router    *chi.Mux
+	config    *config.Config
+	logger    *logger.Logger
+	db        *sql.DB
+	renderer  *renderer.Renderer
+	validator *validator.Validate
 }
 
 func Run() error {
@@ -57,10 +64,13 @@ func Run() error {
 	//	Router
 	app.router = app.setupRouter()
 
-	//	Controllers
-	controllers := app.registerController()
+	//	Validator
+	app.validator = app.setupValidator()
 
-	app.registerRoutes(controllers...)
+	//	Handlers
+	handlers := app.registerHandlers()
+
+	app.registerRoutes(handlers...)
 
 	//	Start server
 	if err = app.startServer(); err != nil {
@@ -108,18 +118,21 @@ func (a *App) setupRouter() *chi.Mux {
 	return router
 }
 
-func (a *App) registerController() []rest.RouteRegistrar {
-	//	Storages
+func (a *App) registerHandlers() []rest.RouteRegistrar {
+	//	Repositories
+	userRepo := user.NewDBRepository(a.db)
 
 	//	Services
+	userSvc := user.NewService(userRepo)
 
-	//	Controllers
+	//	Handlers
 	return []rest.RouteRegistrar{
-		controller.NewHomeController(a.renderer, a.logger),
+		home.NewHandler(a.renderer, a.logger),
+		user.NewHandler(userSvc, a.validator, a.renderer, a.logger),
 	}
 }
 
-func (a *App) registerRoutes(controllers ...rest.RouteRegistrar) {
+func (a *App) registerRoutes(handlers ...rest.RouteRegistrar) {
 	//	Static files
 	a.router.Handle(
 		"/static/*",
@@ -127,8 +140,8 @@ func (a *App) registerRoutes(controllers ...rest.RouteRegistrar) {
 	)
 
 	//	Routes
-	for _, c := range controllers {
-		c.RegisterRoutes(a.router)
+	for _, h := range handlers {
+		h.RegisterRoutes(a.router)
 	}
 }
 
@@ -159,6 +172,27 @@ func (a *App) setupRenderer() (*renderer.Renderer, error) {
 	}
 
 	return renderer.New(templates), nil
+}
+
+func (a *App) setupValidator() *validator.Validate {
+	validate := gpv.New(gpv.WithRequiredStructEnabled())
+
+	//	Register custom validation rules
+	validate.RegisterValidation("login", func(fl gpv.FieldLevel) bool {
+		var re = regexp.MustCompile("^[a-zA-Z0-9._-]+$")
+
+		login := fl.Field().String()
+
+		//	Check whether it's a valid email, if yes - return true
+		if _, err := mail.ParseAddress(login); err == nil {
+			return true
+		}
+
+		// Otherwise, it's a username: reject if it contains forbidden chars
+		return re.MatchString(login)
+	})
+
+	return validator.New(validate)
 }
 
 func static(dir string) http.Handler {

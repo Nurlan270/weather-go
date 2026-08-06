@@ -1,0 +1,71 @@
+{{ define "content" }}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-6">
+            <div class="weather-logo"></div>
+        </div>
+    </div>
+
+    <h2 class="text-center mb-5">Sign Up</h2>
+
+    {{ if $errMsg := .Error.Message }}
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-4 col-md-6 col-sm-12">
+            <div class="alert alert-danger" role="alert">
+                {{ $errMsg }}
+            </div>
+        </div>
+    </div>
+    {{ end }}
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-4 col-md-6 col-sm-12">
+            <form action="/auth/register" method="POST" class="mt-4">
+                <div class="mb-3">
+                    <label for="login" class="form-label">Login</label>
+                    <div class="input-group has-validation">
+                        <input type="text" class="form-control {{if .Error.Items.Login}}is-invalid{{end}}" id="login"
+                               name="login"
+                               value="{{if $data := .OldData.login}}{{$data}}{{end}}"/>
+                        {{ if $msg := .Error.Items.Login }}
+                        <div class="invalid-feedback">
+                            {{ $msg }}
+                        </div>
+                        {{ end }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="input-group has-validation">
+                        <input type="password" class="form-control {{if .Error.Items.Password}}is-invalid{{end}}"
+                               id="password"
+                               name="password" value=""/>
+                        {{ if $msg := .Error.Items.Password }}
+                        <div class="invalid-feedback">
+                            {{ $msg }}
+                        </div>
+                        {{ end }}
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="repeat-password" class="form-label">Password confirmation</label>
+                    <div class="input-group has-validation">
+                        <input type="password"
+                               class="form-control {{if .Error.Items.PasswordConfirmation}}is-invalid{{end}}"
+                               id="repeat-password" name="password_confirmation"
+                               value=""/>
+                        {{ if $msg := .Error.Items.PasswordConfirmation }}
+                        <div class="invalid-feedback">
+                            {{ $msg }}
+                        </div>
+                        {{ end }}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 mt-3">Sign Up</button>
+                <p class="mt-2 text-center">Already have an account? <a href="/auth/login">Sign in here</a></p>
+            </form>
+        </div>
+    </div>
+</div>
+{{ end }}
