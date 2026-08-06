@@ -5,4 +5,4 @@ http_server:
 db:
   host: localhost
   port: 5432
-  name: tennis_scoreboard
+  name: weather_tracker
