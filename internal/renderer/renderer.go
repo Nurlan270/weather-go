@@ -2,8 +2,7 @@ package renderer
 
 import (
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/renderer/message"
-	"github.com/Nurlan270/weather-go/internal/renderer/response"
+	"github.com/Nurlan270/weather-go/internal/view"
 	"html/template"
 	"net/http"
 )
@@ -18,30 +17,40 @@ func New(templates map[string]*template.Template) *Renderer {
 	}
 }
 
-func (r *Renderer) RenderPage(
+func (r *Renderer) RenderView(
 	w http.ResponseWriter,
+	code int,
 	page string,
-	resp response.PageResponse,
+	data any,
 ) error {
-	return r.render(w, http.StatusOK, page, resp)
+	return r.render(w, code, page, data)
 }
 
 func (r *Renderer) RenderNotFound(w http.ResponseWriter) error {
-	resp := response.ErrorPageResponse{
-		PageTitle: message.NotFound,
-		Message:   message.NotFound,
-	}
+	data := view.NewErrorViewData(view.MessageNotFoundError, view.MessageNotFoundError, "")
 
-	return r.render(w, http.StatusNotFound, "error", resp)
+	return r.render(w, http.StatusNotFound, "error", data)
+}
+
+func (r *Renderer) RenderServerError(w http.ResponseWriter) error {
+	data := view.NewErrorViewData(view.MessageServerError, view.MessageServerError, "")
+
+	return r.render(w, http.StatusInternalServerError, "error", data)
 }
 
 func (r *Renderer) Back(
 	w http.ResponseWriter,
 	code int,
 	page string,
-	resp response.PageResponse,
+	data any,
 ) error {
-	return r.render(w, code, page, resp)
+	return r.render(w, code, page, data)
+}
+
+func (r *Renderer) Redirect(w http.ResponseWriter, req *http.Request, url string) {
+	r.writeHeaders(w)
+
+	http.Redirect(w, req, url, http.StatusSeeOther)
 }
 
 // render is low-level helper; powers other methods
@@ -49,7 +58,7 @@ func (r *Renderer) render(
 	w http.ResponseWriter,
 	statusCode int,
 	page string,
-	resp any,
+	data any,
 ) error {
 	tmpl, ok := r.templates[page]
 	if !ok {
@@ -58,15 +67,20 @@ func (r *Renderer) render(
 
 	r.writeMetaData(w, statusCode)
 
-	if err := tmpl.Execute(w, resp); err != nil {
+	if err := tmpl.Execute(w, data); err != nil {
 		return fmt.Errorf("failed to execute template %q: %w", page, err)
 	}
 	return nil
 }
 
+func (r *Renderer) writeHeaders(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+}
+
+// writeMetaData is used to set headers & write status code
 func (r *Renderer) writeMetaData(w http.ResponseWriter, statusCode int) {
 	//	Headers
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	r.writeHeaders(w)
 
 	//	Status code
 	w.WriteHeader(statusCode)

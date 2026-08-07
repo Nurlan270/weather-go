@@ -3,7 +3,7 @@ package validator
 import (
 	"errors"
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/renderer/response"
+	"github.com/Nurlan270/weather-go/internal/view"
 	"github.com/go-playground/validator/v10"
 	"github.com/iancoleman/strcase"
 	"strings"
@@ -17,11 +17,11 @@ func New(validate *validator.Validate) *Validate {
 	return &Validate{validate}
 }
 
-func (v *Validate) MapErrors(err error) response.ErrorMessages {
+func (v *Validate) MapErrors(err error) view.ErrorMessages {
 	var vErrors validator.ValidationErrors
 	errors.As(err, &vErrors)
 
-	var messages = make(response.ErrorMessages)
+	var messages = make(view.ErrorMessages)
 
 	for _, e := range vErrors {
 		messages[e.StructField()] = v.getMessage(e)

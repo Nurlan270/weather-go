@@ -6,3 +6,6 @@ db:
   host: localhost
   port: 5432
   name: weather_tracker
+session:
+  name: weather_tracker
+  expires_in: 1h

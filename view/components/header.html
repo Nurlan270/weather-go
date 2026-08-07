@@ -5,10 +5,14 @@
             <img src="/static/img/icon.png" alt="" width="30" height="24" class="d-inline-block align-text-top">
             Weather Tracker
         </a>
+        {{ if $login := .Login }}
         <div class="d-flex align-items-center">
-            <span class="navbar-text me-3">zhukovsd</span>
-            <button class="btn btn-outline-danger">Sign out</button>
+            <span class="navbar-text me-3">{{ $login }}</span>
+            <form action="/auth/sign-out" method="POST">
+                <button class="btn btn-outline-danger" type="submit">Sign out</button>
+            </form>
         </div>
+        {{ end }}
     </div>
 </nav>
 {{ end }}

@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func Connect(cfg *config.DB) (*sql.DB, error) {
+func Connect(cfg config.DB) (*sql.DB, error) {
 	//	postgres://username:password@host:port/dbname?sslmode=disable
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		cfg.Username, cfg.Password,

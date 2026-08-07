@@ -17,9 +17,19 @@ const (
 )
 
 type Config struct {
-	Env        string
-	HTTPServer *HTTPServer `mapstructure:"http_server"`
-	DB         *DB         `mapstructure:"db"`
+	App        App        `mapstructure:"app"`
+	Session    Session    `mapstructure:"session"`
+	HTTPServer HTTPServer `mapstructure:"http_server"`
+	DB         DB         `mapstructure:"db"`
+}
+
+type App struct {
+	Env string `mapstructure:"env"`
+}
+
+type Session struct {
+	Name      string        `mapstructure:"name"`
+	ExpiresIn time.Duration `mapstructure:"expires_in"`
 }
 
 type HTTPServer struct {
@@ -31,8 +41,8 @@ type DB struct {
 	Host     string `mapstructure:"host"`
 	Port     string `mapstructure:"port"`
 	Name     string `mapstructure:"name"`
-	Username string
-	Password string
+	Username string `mapstructure:"username"`
+	Password string `mapstructure:"password"`
 }
 
 func Load() (*Config, error) {
@@ -52,12 +62,14 @@ func Load() (*Config, error) {
 	var cfg Config
 
 	//	Set app environment
-	cfg.Env = env
+	cfg.App.Env = env
 
 	//	Viper setup
 	v := viper.New()
 	v.SetConfigFile(filepath.Join("config", env+".yml"))
+	v.AutomaticEnv()
 
+	//	Read config file
 	if err = v.ReadInConfig(); err != nil {
 		return nil, fmt.Errorf("failed reading config: %w", err)
 	}
@@ -66,20 +78,6 @@ func Load() (*Config, error) {
 	if err = v.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("failed to decode into struct: %w", err)
 	}
-
-	//	Get and set DB_USERNAME & DB_PASSWORD
-	dbUser, err := getEnv("DB_USERNAME")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get env variable: %w", err)
-	}
-
-	dbPassword, err := getEnv("DB_PASSWORD")
-	if err != nil {
-		return nil, fmt.Errorf("failed to get env variable: %w", err)
-	}
-
-	cfg.DB.Username = dbUser
-	cfg.DB.Password = dbPassword
 
 	return &cfg, nil
 }

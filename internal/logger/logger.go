@@ -21,6 +21,8 @@ func New(env string) *Logger {
 		encoder = zapcore.NewConsoleEncoder(encoderCfg)
 	case "prod":
 		encoder = zapcore.NewJSONEncoder(encoderCfg)
+	default:
+		encoder = zapcore.NewJSONEncoder(encoderCfg)
 	}
 
 	core := zapcore.NewCore(encoder, os.Stdout, zapcore.DebugLevel)
