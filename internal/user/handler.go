@@ -60,7 +60,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 		data.Error.Message = view.MessageInvalidData
 
-		if err = h.renderer.Back(w, http.StatusBadRequest, VIEW, data); err != nil {
+		if err = h.renderer.RenderView(w, http.StatusBadRequest, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 		return
@@ -82,7 +82,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		data.Error.Message = view.MessageValidationFailed
 		data.Error.Items = h.validate.MapErrors(err)
 
-		if err = h.renderer.Back(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
+		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 		return
@@ -96,7 +96,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		data.Old["login"] = login
 		data.Error.Message = view.MessageUserAlreadyExists
 
-		if err = h.renderer.Back(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
+		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 		return
@@ -108,7 +108,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		data.Old["login"] = login
 		data.Error.Message = view.MessageServerError
 
-		if err = h.renderer.Back(w, http.StatusInternalServerError, VIEW, data); err != nil {
+		if err = h.renderer.RenderView(w, http.StatusInternalServerError, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 		return
@@ -142,7 +142,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 		data.Error.Message = view.MessageInvalidData
 
-		if err = h.renderer.Back(w, http.StatusBadRequest, VIEW, data); err != nil {
+		if err = h.renderer.RenderView(w, http.StatusBadRequest, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 		return
@@ -162,7 +162,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		data.Error.Message = view.MessageValidationFailed
 		data.Error.Items = h.validate.MapErrors(err)
 
-		if err = h.renderer.Back(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
+		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 		return
@@ -176,7 +176,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		data.Old["login"] = login
 		data.Error.Message = view.MessageUserNotFound
 
-		if err = h.renderer.Back(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
+		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 		return
@@ -187,7 +187,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		data.Old["login"] = login
 		data.Error.Message = view.MessageInvalidPassword
 
-		if err = h.renderer.Back(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
+		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 		return
@@ -199,7 +199,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		data.Old["login"] = login
 		data.Error.Message = view.MessageServerError
 
-		if err = h.renderer.Back(w, http.StatusInternalServerError, VIEW, data); err != nil {
+		if err = h.renderer.RenderView(w, http.StatusInternalServerError, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 		return

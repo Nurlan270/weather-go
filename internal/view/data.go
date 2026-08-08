@@ -7,6 +7,11 @@ type BaseViewData struct {
 	Error ErrorData
 }
 
+type ErrorData struct {
+	Message string
+	Items   ErrorMessages
+}
+
 func NewBaseViewData(title, login string) *BaseViewData {
 	return &BaseViewData{
 		Title: title,
@@ -27,9 +32,4 @@ func NewErrorViewData(title, message, login string) *ErrorViewData {
 		Login:   login,
 		Message: message,
 	}
-}
-
-type ErrorData struct {
-	Message string
-	Items   ErrorMessages
 }

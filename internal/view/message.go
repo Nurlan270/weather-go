@@ -1,8 +1,9 @@
 package view
 
 const (
-	MessageServerError   = "Something went wrong, please try again later"
-	MessageNotFoundError = "Page not found"
+	MessageServerError          = "Something went wrong, please try again later"
+	MessageNotFoundError        = "Page not found"
+	MessageTooManyRequestsError = "Too many requests, slow down and try again later"
 
 	MessageInvalidData       = "Provided data is invalid"
 	MessageValidationFailed  = "Validation failed, please check provided data"

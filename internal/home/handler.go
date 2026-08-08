@@ -4,6 +4,7 @@ import (
 	"github.com/Nurlan270/weather-go/internal/config"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
+	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/Nurlan270/weather-go/internal/user"
 	"github.com/Nurlan270/weather-go/internal/view"
 	"net/http"
@@ -29,7 +30,7 @@ func NewHandler(
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	const VIEW = "home"
 
-	login := r.Context().Value("login").(string)
+	login := request.GetLoginFromCtx(r.Context())
 
 	data := view.NewBaseViewData("Home", login)
 

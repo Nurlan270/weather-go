@@ -3,8 +3,17 @@ package app
 import (
 	"database/sql"
 	"errors"
+	"github.com/Nurlan270/weather-go/internal/config"
+	"github.com/Nurlan270/weather-go/internal/db"
+	"github.com/Nurlan270/weather-go/internal/home"
+	"github.com/Nurlan270/weather-go/internal/logger"
+	"github.com/Nurlan270/weather-go/internal/renderer"
 	mw "github.com/Nurlan270/weather-go/internal/rest/middleware"
+	"github.com/Nurlan270/weather-go/internal/user"
 	"github.com/Nurlan270/weather-go/internal/validator"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	gpv "github.com/go-playground/validator/v10"
 	"html/template"
 	"log"
 	"net/http"
@@ -12,16 +21,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/Nurlan270/weather-go/internal/config"
-	"github.com/Nurlan270/weather-go/internal/db"
-	"github.com/Nurlan270/weather-go/internal/home"
-	"github.com/Nurlan270/weather-go/internal/logger"
-	"github.com/Nurlan270/weather-go/internal/renderer"
-	"github.com/Nurlan270/weather-go/internal/user"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	gpv "github.com/go-playground/validator/v10"
+	"time"
 
 	"go.uber.org/zap"
 )
@@ -130,7 +130,7 @@ func (a *App) initRouter() {
 
 	//	404-Page custom setup
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		err := a.renderer.RenderNotFound(w)
+		err := a.renderer.RenderNotFound(w, r)
 		if err != nil {
 			a.logger.ErrorRenderPage(err)
 		}
@@ -181,19 +181,29 @@ func (a *App) registerRoutes() {
 
 	//	Middlewares
 	authMW := mw.NewAuthMiddleware(a.services.User, a.renderer, a.config.Session, a.logger)
+	limiterMW := mw.NewRateLimitMiddleware(a.renderer)
 
 	//	Routes
+
+	//	Home
 	a.router.With(authMW.RequireAuth).Get("/", homeH.Index)
 
 	//	Auth
 	a.router.Route("/auth", func(r chi.Router) {
 		r.Get("/sign-up", userH.ShowRegister)
-		r.Post("/sign-up", userH.RegisterUser)
-
 		r.Get("/sign-in", userH.ShowLogin)
-		r.Post("/sign-in", userH.LoginUser)
 
-		r.Post("/sign-out", userH.LogoutUser)
+		//	Rate-limited routes
+		r.Route("/", func(r chi.Router) {
+			r.Use(
+				middleware.ClientIPFromRemoteAddr,
+				limiterMW.Limit(30, time.Hour),
+			)
+
+			r.Post("/sign-up", userH.RegisterUser)
+			r.Post("/sign-in", userH.LoginUser)
+			r.Post("/sign-out", userH.LogoutUser)
+		})
 	})
 }
 

@@ -7,6 +7,7 @@ import (
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
 	"github.com/Nurlan270/weather-go/internal/rest"
+	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/Nurlan270/weather-go/internal/user"
 	"go.uber.org/zap"
 	"net/http"
@@ -57,13 +58,14 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 		if err != nil {
 			m.log.Error("could not get user by session ID", zap.Error(err))
 
-			if err = m.renderer.RenderServerError(w); err != nil {
+			if err = m.renderer.RenderServerError(w, r); err != nil {
 				m.log.ErrorRenderPage(err)
 			}
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "login", u.Login)
+		//	Set login to ctx, so it's accessible from handlers
+		ctx := context.WithValue(r.Context(), request.LoginCtxKey, u.Login)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

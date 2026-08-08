@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"fmt"
+	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/Nurlan270/weather-go/internal/view"
 	"html/template"
 	"net/http"
@@ -26,25 +27,28 @@ func (r *Renderer) RenderView(
 	return r.render(w, code, page, data)
 }
 
-func (r *Renderer) RenderNotFound(w http.ResponseWriter) error {
-	data := view.NewErrorViewData(view.MessageNotFoundError, view.MessageNotFoundError, "")
+func (r *Renderer) RenderNotFound(w http.ResponseWriter, req *http.Request) error {
+	login := request.GetLoginFromCtx(req.Context())
+
+	data := view.NewErrorViewData(view.MessageNotFoundError, view.MessageNotFoundError, login)
 
 	return r.render(w, http.StatusNotFound, "error", data)
 }
 
-func (r *Renderer) RenderServerError(w http.ResponseWriter) error {
-	data := view.NewErrorViewData(view.MessageServerError, view.MessageServerError, "")
+func (r *Renderer) RenderTooManyRequests(w http.ResponseWriter, req *http.Request) error {
+	login := request.GetLoginFromCtx(req.Context())
 
-	return r.render(w, http.StatusInternalServerError, "error", data)
+	data := view.NewErrorViewData(view.MessageTooManyRequestsError, view.MessageTooManyRequestsError, login)
+
+	return r.render(w, http.StatusTooManyRequests, "error", data)
 }
 
-func (r *Renderer) Back(
-	w http.ResponseWriter,
-	code int,
-	page string,
-	data any,
-) error {
-	return r.render(w, code, page, data)
+func (r *Renderer) RenderServerError(w http.ResponseWriter, req *http.Request) error {
+	login := request.GetLoginFromCtx(req.Context())
+
+	data := view.NewErrorViewData(view.MessageServerError, view.MessageServerError, login)
+
+	return r.render(w, http.StatusInternalServerError, "error", data)
 }
 
 func (r *Renderer) Redirect(w http.ResponseWriter, req *http.Request, url string) {
