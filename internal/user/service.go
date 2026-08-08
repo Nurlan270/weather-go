@@ -52,7 +52,7 @@ func (s *Service) GetUserByLogin(login string) (*entity.User, error) {
 }
 
 func (s *Service) RegisterUser(user request.RegisterUser) (*entity.Session, error) {
-	hashedPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+	encryptedPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
 	if err != nil {
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -60,7 +60,7 @@ func (s *Service) RegisterUser(user request.RegisterUser) (*entity.Session, erro
 	expiresAt := time.Now().Add(s.sessCfg.ExpiresIn).UTC()
 
 	//	Create User
-	u, err := s.repo.CreateUser(user.Login, string(hashedPass))
+	u, err := s.repo.CreateUser(user.Login, string(encryptedPass))
 	if err != nil {
 		uniqErr := pq.As(err, pqerror.UniqueViolation)
 		if uniqErr != nil {

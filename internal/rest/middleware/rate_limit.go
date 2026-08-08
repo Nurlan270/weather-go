@@ -8,37 +8,37 @@ import (
 	"time"
 )
 
-type Limiter struct {
+type RateLimitMiddleware struct {
 	renderer *renderer.Renderer
 }
 
-func NewRateLimitMiddleware(renderer *renderer.Renderer) *Limiter {
-	return &Limiter{
+func NewRateLimitMiddleware(renderer *renderer.Renderer) *RateLimitMiddleware {
+	return &RateLimitMiddleware{
 		renderer: renderer,
 	}
 }
 
-func (l *Limiter) Limit(requestLimit int, windowLength time.Duration) func(next http.Handler) http.Handler {
+func (m *RateLimitMiddleware) Limit(requestLimit int, windowLength time.Duration) func(next http.Handler) http.Handler {
 	return httprate.LimitBy(
 		requestLimit,
 		windowLength,
 		clientIPKey,
-		l.renderPage(),
+		m.renderPage(),
 	)
 }
 
-func (l *Limiter) LimitByEndpoint(requestLimit int, windowLength time.Duration) func(next http.Handler) http.Handler {
+func (m *RateLimitMiddleware) LimitByEndpoint(requestLimit int, windowLength time.Duration) func(next http.Handler) http.Handler {
 	return httprate.LimitBy(
 		requestLimit,
 		windowLength,
 		httprate.JoinKeys(clientIPKey, httprate.KeyByEndpoint),
-		l.renderPage(),
+		m.renderPage(),
 	)
 }
 
-func (l *Limiter) renderPage() httprate.Option {
+func (m *RateLimitMiddleware) renderPage() httprate.Option {
 	return httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
-		_ = l.renderer.RenderTooManyRequests(w, r)
+		_ = m.renderer.RenderTooManyRequests(w, r)
 	})
 }
 
