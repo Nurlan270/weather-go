@@ -181,15 +181,26 @@ func (a *App) registerRoutes() {
 
 	//	Middlewares
 	authMW := mw.NewAuthMiddleware(a.services.User, a.renderer, a.config.Session, a.logger)
+	guestMW := mw.NewGuestMiddleware(a.services.User, a.renderer, a.config.Session, a.logger)
 	limiterMW := mw.NewRateLimitMiddleware(a.renderer)
 
 	//	Routes
+	a.router.Route("/", func(r chi.Router) {
+		r.Use(authMW.RequireAuth)
 
-	//	Home
-	a.router.With(authMW.RequireAuth).Get("/", homeH.Index)
+		r.Get("/", homeH.Index)
 
-	//	Auth
+		//	Sign out
+		a.router.With(
+			middleware.ClientIPFromRemoteAddr,
+			limiterMW.Limit(30, time.Hour),
+		).Post("/auth/sign-out", userH.LogoutUser)
+	})
+
+	//	Auth (only guests allowed)
 	a.router.Route("/auth", func(r chi.Router) {
+		r.Use(guestMW.RequireGuest)
+
 		r.Get("/sign-up", userH.ShowRegister)
 		r.Get("/sign-in", userH.ShowLogin)
 
@@ -202,7 +213,6 @@ func (a *App) registerRoutes() {
 
 			r.Post("/sign-up", userH.RegisterUser)
 			r.Post("/sign-in", userH.LoginUser)
-			r.Post("/sign-out", userH.LogoutUser)
 		})
 	})
 }

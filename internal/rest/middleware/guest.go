@@ -13,20 +13,20 @@ import (
 	"net/http"
 )
 
-type AuthMiddleware struct {
+type GuestMiddleware struct {
 	userSvc  *user.Service
 	renderer *renderer.Renderer
 	sessCfg  config.Session
 	log      *logger.Logger
 }
 
-func NewAuthMiddleware(
+func NewGuestMiddleware(
 	userSvc *user.Service,
 	renderer *renderer.Renderer,
 	sessCfg config.Session,
 	log *logger.Logger,
-) *AuthMiddleware {
-	return &AuthMiddleware{
+) *GuestMiddleware {
+	return &GuestMiddleware{
 		userSvc:  userSvc,
 		renderer: renderer,
 		sessCfg:  sessCfg,
@@ -34,24 +34,23 @@ func NewAuthMiddleware(
 	}
 }
 
-func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
+func (m *GuestMiddleware) RequireGuest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//	Check whether user unauthorized
 		cookieName := rest.GetSessionCookieName(m.sessCfg.Name)
 		cookie, err := r.Cookie(cookieName)
 
-		//	Unauthorized -> redirect to sign up page
+		//	Unauthorized -> continue
 		if err != nil {
-			m.renderer.Redirect(w, r, "/auth/sign-up")
+			next.ServeHTTP(w, r)
 			return
 		}
 
 		//	Check if session ID is valid
 		u, err := m.userSvc.GetUserBySID(cookie.Value)
 
-		//	Expired -> redirect to sign up page
+		//	Session expired -> continue
 		if err != nil && errors.Is(err, user.ErrSessionExpired) {
-			m.renderer.Redirect(w, r, "/auth/sign-up")
+			next.ServeHTTP(w, r)
 			return
 		}
 
@@ -67,6 +66,7 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 		//	Set login to ctx, so it's accessible from handlers
 		ctx := context.WithValue(r.Context(), request.LoginCtxKey, u.Login)
 
-		next.ServeHTTP(w, r.WithContext(ctx))
+		//	Authorized -> redirect to home page
+		m.renderer.Redirect(w, r.WithContext(ctx), "/")
 	})
 }
