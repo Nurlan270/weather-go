@@ -122,10 +122,14 @@ func (a *App) initRenderer() {
 func (a *App) initRouter() {
 	r := chi.NewRouter()
 
-	//	Middlewares
+	//	Global middlewares
+	loggerMW := mw.NewLoggerMiddleware(a.logger)
+
 	r.Use(
 		middleware.Recoverer,
 		middleware.CleanPath,
+		middleware.RequestID,
+		loggerMW.Log,
 	)
 
 	//	404-Page custom setup
