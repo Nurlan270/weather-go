@@ -3,14 +3,16 @@ package middleware
 import (
 	"context"
 	"errors"
+	"net/http"
+
+	"go.uber.org/zap"
+
 	"github.com/Nurlan270/weather-go/internal/config"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
 	"github.com/Nurlan270/weather-go/internal/rest"
 	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/Nurlan270/weather-go/internal/user"
-	"go.uber.org/zap"
-	"net/http"
 )
 
 type GuestMiddleware struct {
@@ -42,6 +44,7 @@ func (m *GuestMiddleware) RequireGuest(next http.Handler) http.Handler {
 		//	Unauthorized -> continue
 		if err != nil {
 			next.ServeHTTP(w, r)
+
 			return
 		}
 
@@ -51,6 +54,7 @@ func (m *GuestMiddleware) RequireGuest(next http.Handler) http.Handler {
 		//	Session expired -> continue
 		if err != nil && errors.Is(err, user.ErrSessionExpired) {
 			next.ServeHTTP(w, r)
+
 			return
 		}
 
@@ -60,6 +64,7 @@ func (m *GuestMiddleware) RequireGuest(next http.Handler) http.Handler {
 			if err = m.renderer.RenderServerError(w, r); err != nil {
 				m.log.ErrorRenderPage(err)
 			}
+
 			return
 		}
 

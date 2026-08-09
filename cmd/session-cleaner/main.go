@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"github.com/Nurlan270/weather-go/internal/config"
-	database "github.com/Nurlan270/weather-go/internal/db"
 	"log"
 	"time"
+
+	"github.com/Nurlan270/weather-go/internal/config"
+	database "github.com/Nurlan270/weather-go/internal/db"
 )
 
 func main() {
@@ -15,6 +16,7 @@ func main() {
 	}
 
 	dbCfg := cfg.DB
+
 	db, err := database.Connect(dbCfg)
 	if err != nil {
 		log.Fatal(err)
@@ -27,6 +29,7 @@ func main() {
 	defer cancel()
 
 	log.Println("Starting cleaner...")
+
 	for {
 		select {
 		case <-ticker.C:
@@ -34,6 +37,7 @@ func main() {
 			if err != nil {
 				log.Printf("failed to delete expired sesssions: %v", err)
 			}
+
 			count, _ := r.RowsAffected()
 			log.Printf("%v row(s) was deleted", count)
 		case <-ctx.Done():

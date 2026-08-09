@@ -13,5 +13,6 @@ func GetLoginFromCtx(ctx context.Context) string {
 	if !ok {
 		l = ""
 	}
+
 	return l
 }

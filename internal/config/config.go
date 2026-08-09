@@ -83,7 +83,7 @@ func Load() (*Config, error) {
 }
 
 // getEnv is a helper to easily get values
-// from .env file and return error on failure
+// from .env file and return error on failure.
 func getEnv(key string) (string, error) {
 	v := os.Getenv(key)
 

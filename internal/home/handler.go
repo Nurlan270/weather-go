@@ -1,11 +1,12 @@
 package home
 
 import (
+	"net/http"
+
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
 	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/Nurlan270/weather-go/internal/view"
-	"net/http"
 )
 
 type Handler struct {

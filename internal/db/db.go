@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/Nurlan270/weather-go/internal/config"
 
 	_ "github.com/lib/pq"

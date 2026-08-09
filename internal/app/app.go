@@ -3,17 +3,6 @@ package app
 import (
 	"database/sql"
 	"errors"
-	"github.com/Nurlan270/weather-go/internal/config"
-	"github.com/Nurlan270/weather-go/internal/db"
-	"github.com/Nurlan270/weather-go/internal/home"
-	"github.com/Nurlan270/weather-go/internal/logger"
-	"github.com/Nurlan270/weather-go/internal/renderer"
-	mw "github.com/Nurlan270/weather-go/internal/rest/middleware"
-	"github.com/Nurlan270/weather-go/internal/user"
-	"github.com/Nurlan270/weather-go/internal/validator"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	gpv "github.com/go-playground/validator/v10"
 	"html/template"
 	"log"
 	"net/http"
@@ -23,7 +12,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
+
+	"github.com/Nurlan270/weather-go/internal/config"
+	"github.com/Nurlan270/weather-go/internal/db"
+	"github.com/Nurlan270/weather-go/internal/home"
+	"github.com/Nurlan270/weather-go/internal/logger"
+	"github.com/Nurlan270/weather-go/internal/renderer"
+	mw "github.com/Nurlan270/weather-go/internal/rest/middleware"
+	"github.com/Nurlan270/weather-go/internal/user"
+	"github.com/Nurlan270/weather-go/internal/validator"
+
+	gpv "github.com/go-playground/validator/v10"
 )
 
 type App struct {
@@ -228,6 +230,7 @@ func static(dir string) http.Handler {
 		//	Return 404 if user try to access list of static files (e.g. static/css/)
 		if strings.HasSuffix(r.URL.Path, "/") {
 			http.NotFound(w, r)
+
 			return
 		}
 
@@ -245,6 +248,7 @@ func (a *App) startServer() {
 	}
 
 	a.logger.Info("Starting server", zap.String("address", server.Addr))
+
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		a.logger.Fatal("App finished unexpectedly", zap.Error(err))
 	}

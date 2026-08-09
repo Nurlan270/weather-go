@@ -3,10 +3,12 @@ package validator
 import (
 	"errors"
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/view"
+	"strings"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/iancoleman/strcase"
-	"strings"
+
+	"github.com/Nurlan270/weather-go/internal/view"
 )
 
 type Validate struct {
@@ -19,6 +21,7 @@ func New(validate *validator.Validate) *Validate {
 
 func (v *Validate) MapErrors(err error) view.ErrorMessages {
 	var vErrors validator.ValidationErrors
+
 	errors.As(err, &vErrors)
 
 	var messages = make(view.ErrorMessages)
@@ -50,7 +53,7 @@ func (v *Validate) getMessage(f validator.FieldError) string {
 }
 
 // formatFieldName formats field's name
-// from "SomeFieldName" to "Some field name"
+// from "SomeFieldName" to "Some field name".
 func (v *Validate) formatFieldName(n string) string {
 	s := strcase.ToDelimited(n, ' ')
 	return strings.ToUpper(s[:1]) + strings.ToLower(s[1:])

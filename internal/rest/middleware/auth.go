@@ -3,14 +3,16 @@ package middleware
 import (
 	"context"
 	"errors"
+	"net/http"
+
+	"go.uber.org/zap"
+
 	"github.com/Nurlan270/weather-go/internal/config"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
 	"github.com/Nurlan270/weather-go/internal/rest"
 	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/Nurlan270/weather-go/internal/user"
-	"go.uber.org/zap"
-	"net/http"
 )
 
 type AuthMiddleware struct {
@@ -61,6 +63,7 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 			if err = m.renderer.RenderServerError(w, r); err != nil {
 				m.log.ErrorRenderPage(err)
 			}
+
 			return
 		}
 

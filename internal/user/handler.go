@@ -2,6 +2,11 @@ package user
 
 import (
 	"errors"
+	"net/http"
+	"strings"
+
+	"go.uber.org/zap"
+
 	"github.com/Nurlan270/weather-go/internal/config"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
@@ -9,10 +14,6 @@ import (
 	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/Nurlan270/weather-go/internal/validator"
 	"github.com/Nurlan270/weather-go/internal/view"
-	"go.uber.org/zap"
-
-	"net/http"
-	"strings"
 )
 
 type Handler struct {
@@ -63,6 +64,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderView(w, http.StatusBadRequest, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 
@@ -85,6 +87,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 
@@ -99,6 +102,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 
@@ -111,6 +115,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderView(w, http.StatusInternalServerError, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 
@@ -145,6 +150,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderView(w, http.StatusBadRequest, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 
@@ -165,6 +171,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 
@@ -179,6 +186,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 
@@ -190,6 +198,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 
@@ -202,6 +211,7 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderView(w, http.StatusInternalServerError, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 

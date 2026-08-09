@@ -3,8 +3,9 @@ package user
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/entity"
 	"time"
+
+	"github.com/Nurlan270/weather-go/internal/entity"
 )
 
 type DBRepository struct {
@@ -24,6 +25,7 @@ func (r *DBRepository) GetUserBySID(sid string) (*entity.User, error) {
 	`
 
 	var user entity.User
+
 	err := r.db.QueryRow(q, sid).Scan(&user.ID, &user.Login, &user.Password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
@@ -38,6 +40,7 @@ func (r *DBRepository) GetUserByLogin(login string) (*entity.User, error) {
 	row := r.db.QueryRow(q, login)
 
 	var user entity.User
+
 	err := row.Scan(&user.ID, &user.Login, &user.Password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
@@ -63,7 +66,11 @@ func (r *DBRepository) CreateUser(login, password string) (*entity.User, error) 
 	return &user, nil
 }
 
-func (r *DBRepository) CreateSession(uuid string, userID int64, expiresAt time.Time) (*entity.Session, error) {
+func (r *DBRepository) CreateSession(
+	uuid string,
+	userID int64,
+	expiresAt time.Time,
+) (*entity.Session, error) {
 	const q = `
 		INSERT INTO sessions (id, user_id, expires_at)
 		VALUES ($1, $2, $3)

@@ -4,14 +4,17 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/config"
-	"github.com/Nurlan270/weather-go/internal/entity"
-	"github.com/Nurlan270/weather-go/internal/rest/request"
-	guuid "github.com/google/uuid"
+	"time"
+
 	"github.com/lib/pq"
 	"github.com/lib/pq/pqerror"
 	"golang.org/x/crypto/bcrypt"
-	"time"
+
+	"github.com/Nurlan270/weather-go/internal/config"
+	"github.com/Nurlan270/weather-go/internal/entity"
+	"github.com/Nurlan270/weather-go/internal/rest/request"
+
+	guuid "github.com/google/uuid"
 )
 
 type UserRepository interface {

@@ -1,11 +1,13 @@
 package middleware
 
 import (
-	"github.com/Nurlan270/weather-go/internal/logger"
-	"github.com/go-chi/chi/v5/middleware"
-	"go.uber.org/zap"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
+	"go.uber.org/zap"
+
+	"github.com/Nurlan270/weather-go/internal/logger"
 )
 
 type LoggerMiddleware struct {

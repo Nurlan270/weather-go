@@ -2,12 +2,13 @@ package logger
 
 import (
 	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 type Logger struct {
@@ -38,6 +39,7 @@ func getEncoder(env string) zapcore.Encoder {
 	encoderCfg := buildEncoderConfig(env)
 
 	var e zapcore.Encoder
+
 	switch env {
 	case "local":
 		e = zapcore.NewConsoleEncoder(encoderCfg)
@@ -52,6 +54,7 @@ func getEncoder(env string) zapcore.Encoder {
 
 func getWriteSyncer(env string) zapcore.WriteSyncer {
 	var ws zapcore.WriteSyncer
+
 	switch env {
 	case "local":
 		ws = zapcore.AddSync(os.Stdout)
@@ -66,6 +69,7 @@ func getWriteSyncer(env string) zapcore.WriteSyncer {
 
 func getLevelEnabler(env string) zapcore.LevelEnabler {
 	var le zapcore.LevelEnabler
+
 	switch env {
 	case "local":
 		le = zapcore.DebugLevel

@@ -2,10 +2,11 @@ package renderer
 
 import (
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/rest/request"
-	"github.com/Nurlan270/weather-go/internal/view"
 	"html/template"
 	"net/http"
+
+	"github.com/Nurlan270/weather-go/internal/rest/request"
+	"github.com/Nurlan270/weather-go/internal/view"
 )
 
 type Renderer struct {
@@ -57,7 +58,7 @@ func (r *Renderer) Redirect(w http.ResponseWriter, req *http.Request, url string
 	http.Redirect(w, req, url, http.StatusSeeOther)
 }
 
-// render is low-level helper; powers other methods
+// render is low-level helper; powers other methods.
 func (r *Renderer) render(
 	w http.ResponseWriter,
 	statusCode int,
@@ -74,6 +75,7 @@ func (r *Renderer) render(
 	if err := tmpl.Execute(w, data); err != nil {
 		return fmt.Errorf("failed to execute template %q: %w", page, err)
 	}
+
 	return nil
 }
 
@@ -81,7 +83,7 @@ func (r *Renderer) writeHeaders(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 }
 
-// writeMetaData is used to set headers & write status code
+// writeMetaData is used to set headers & write status code.
 func (r *Renderer) writeMetaData(w http.ResponseWriter, statusCode int) {
 	//	Headers
 	r.writeHeaders(w)

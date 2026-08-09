@@ -1,11 +1,13 @@
 package middleware
 
 import (
-	"github.com/Nurlan270/weather-go/internal/renderer"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/httprate"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httprate"
+
+	"github.com/Nurlan270/weather-go/internal/renderer"
 )
 
 type RateLimitMiddleware struct {
@@ -18,7 +20,10 @@ func NewRateLimitMiddleware(renderer *renderer.Renderer) *RateLimitMiddleware {
 	}
 }
 
-func (m *RateLimitMiddleware) Limit(requestLimit int, windowLength time.Duration) func(next http.Handler) http.Handler {
+func (m *RateLimitMiddleware) Limit(
+	requestLimit int,
+	windowLength time.Duration,
+) func(next http.Handler) http.Handler {
 	return httprate.LimitBy(
 		requestLimit,
 		windowLength,
@@ -27,7 +32,10 @@ func (m *RateLimitMiddleware) Limit(requestLimit int, windowLength time.Duration
 	)
 }
 
-func (m *RateLimitMiddleware) LimitByEndpoint(requestLimit int, windowLength time.Duration) func(next http.Handler) http.Handler {
+func (m *RateLimitMiddleware) LimitByEndpoint(
+	requestLimit int,
+	windowLength time.Duration,
+) func(next http.Handler) http.Handler {
 	return httprate.LimitBy(
 		requestLimit,
 		windowLength,
