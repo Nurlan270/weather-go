@@ -8,4 +8,4 @@ db:
   name: weather_tracker
 session:
   name: weather_tracker
-  expires_in: 1h
+  expires_in: 336h # 14 days

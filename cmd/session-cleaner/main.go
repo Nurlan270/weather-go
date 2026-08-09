@@ -20,7 +20,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	ticker := time.NewTicker(1 * time.Hour)
+	ticker := time.NewTicker(24 * time.Hour)
 	defer ticker.Stop()
 
 	ctx, cancel := context.WithCancel(context.Background())
