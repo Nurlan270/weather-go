@@ -147,7 +147,7 @@ func (a *App) initValidator() {
 	v := gpv.New(gpv.WithRequiredStructEnabled())
 
 	//	Register custom validation rules
-	v.RegisterValidation("login", func(fl gpv.FieldLevel) bool {
+	_ = v.RegisterValidation("login", func(fl gpv.FieldLevel) bool {
 		var re = regexp.MustCompile("^[a-zA-Z0-9._-]+$")
 
 		login := fl.Field().String()

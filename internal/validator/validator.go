@@ -35,18 +35,17 @@ func (v *Validate) getMessage(f validator.FieldError) string {
 
 	switch f.Tag() {
 	case "required":
-		return fmt.Sprintf("%s field is required", fName)
+		return fmt.Sprintf(Required, fName)
 	case "max":
-		return fmt.Sprintf("%s field must be at most %s characters long", fName, f.Param())
+		return fmt.Sprintf(Max, fName, f.Param())
 	case "min":
-		return fmt.Sprintf("%s field must be at least %s characters long", fName, f.Param())
+		return fmt.Sprintf(Min, fName, f.Param())
 	case "eqfield":
-		return fmt.Sprintf("%s field must be equal to %s field", fName, f.Param())
+		return fmt.Sprintf(Eqfield, fName, f.Param())
 	case "login":
-		return fmt.Sprintf(
-			"%s field must be a valid email address or a username, allowed following characters: ._-", fName)
+		return fmt.Sprintf(Login, fName)
 	default:
-		return fmt.Sprintf("%s field failed on %s validation rule", fName, f.Tag())
+		return fmt.Sprintf(Default, fName, f.Tag())
 	}
 }
 
