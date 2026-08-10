@@ -11,6 +11,10 @@ linters:
     - godot
     - wsl_v5
   settings:
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+      verbose: false
     gocyclo:
       min-complexity: 12
     godot:
