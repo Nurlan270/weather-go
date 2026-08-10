@@ -11,6 +11,11 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+const (
+	EnvLocal = "local"
+	EnvProd  = "prod"
+)
+
 type Logger struct {
 	*zap.Logger
 }
@@ -41,9 +46,9 @@ func getEncoder(env string) zapcore.Encoder {
 	var e zapcore.Encoder
 
 	switch env {
-	case "local":
+	case EnvLocal:
 		e = zapcore.NewConsoleEncoder(encoderCfg)
-	case "prod":
+	case EnvProd:
 		e = zapcore.NewJSONEncoder(encoderCfg)
 	default:
 		e = zapcore.NewJSONEncoder(encoderCfg)
@@ -56,9 +61,9 @@ func getWriteSyncer(env string) zapcore.WriteSyncer {
 	var ws zapcore.WriteSyncer
 
 	switch env {
-	case "local":
+	case EnvLocal:
 		ws = zapcore.AddSync(os.Stdout)
-	case "prod":
+	case EnvProd:
 		ws = zapcore.Lock(buildFileWriteSyncer())
 	default:
 		ws = zapcore.AddSync(os.Stdout)
@@ -71,9 +76,9 @@ func getLevelEnabler(env string) zapcore.LevelEnabler {
 	var le zapcore.LevelEnabler
 
 	switch env {
-	case "local":
+	case EnvLocal:
 		le = zapcore.DebugLevel
-	case "prod":
+	case EnvProd:
 		le = zapcore.InfoLevel
 	default:
 		le = zapcore.InfoLevel
@@ -83,15 +88,15 @@ func getLevelEnabler(env string) zapcore.LevelEnabler {
 }
 
 func buildEncoderConfig(env string) zapcore.EncoderConfig {
-	var lvlEncoder zapcore.LevelEncoder
+	var levelEncoder zapcore.LevelEncoder
 
 	switch env {
-	case "local":
-		lvlEncoder = zapcore.CapitalColorLevelEncoder
-	case "prod":
-		lvlEncoder = zapcore.CapitalLevelEncoder
+	case EnvLocal:
+		levelEncoder = zapcore.CapitalColorLevelEncoder
+	case EnvProd:
+		levelEncoder = zapcore.CapitalLevelEncoder
 	default:
-		lvlEncoder = zapcore.CapitalLevelEncoder
+		levelEncoder = zapcore.CapitalLevelEncoder
 	}
 
 	return zapcore.EncoderConfig{
@@ -104,7 +109,7 @@ func buildEncoderConfig(env string) zapcore.EncoderConfig {
 		LineEnding:     zapcore.DefaultLineEnding,
 		EncodeName:     zapcore.FullNameEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,
-		EncodeLevel:    lvlEncoder,
+		EncodeLevel:    levelEncoder,
 		EncodeTime:     zapcore.ISO8601TimeEncoder,
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 	}
