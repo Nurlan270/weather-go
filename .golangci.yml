@@ -4,6 +4,7 @@ linters:
   default: standard
   enable:
     - bidichk
+    - bodyclose
     - tagalign
     - dupl
     - dogsled
