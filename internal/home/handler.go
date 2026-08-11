@@ -1,11 +1,12 @@
 package home
 
 import (
-	"github.com/Nurlan270/weather-go/internal/home/view"
-	"github.com/Nurlan270/weather-go/internal/location"
-	"go.uber.org/zap"
 	"net/http"
 
+	"go.uber.org/zap"
+
+	"github.com/Nurlan270/weather-go/internal/home/view"
+	"github.com/Nurlan270/weather-go/internal/location"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
 	"github.com/Nurlan270/weather-go/internal/rest/request"
@@ -39,6 +40,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		h.log.Error("list locations by user id failed", zap.Error(err))
 
 		_ = h.renderer.RenderServerError(w, r)
+
 		return
 	}
 

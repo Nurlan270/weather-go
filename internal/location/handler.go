@@ -3,19 +3,19 @@ package location
 import (
 	"errors"
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/rest/openweather/response"
-	baseview "github.com/Nurlan270/weather-go/internal/view"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 
 	"github.com/Nurlan270/weather-go/internal/location/view"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
+	"github.com/Nurlan270/weather-go/internal/rest/openweather/response"
 	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/Nurlan270/weather-go/internal/validator"
+	baseview "github.com/Nurlan270/weather-go/internal/view"
 )
 
 type Handler struct {
@@ -45,6 +45,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	user := request.GetUserFromCtx(r.Context())
 
 	var location *response.Location
+
 	data := view.NewSearchViewData("Search Results", user.Login, location)
 
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
@@ -95,6 +96,7 @@ func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 	user := request.GetUserFromCtx(r.Context())
 
 	var location *response.Location
+
 	data := view.NewSearchViewData("Search Results", user.Login, location)
 
 	if err := r.ParseForm(); err != nil {
@@ -150,6 +152,7 @@ func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderServerError(w, r); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 
@@ -167,6 +170,7 @@ func (h *Handler) DeleteLocation(w http.ResponseWriter, r *http.Request) {
 		if err = h.renderer.RenderServerError(w, r); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
+
 		return
 	}
 

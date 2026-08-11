@@ -2,9 +2,10 @@ package openweather
 
 import (
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/config"
 	"net/http"
 	"net/url"
+
+	"github.com/Nurlan270/weather-go/internal/config"
 )
 
 const BaseEndpoint = "https://api.openweathermap.org/data/2.5/weather"
@@ -67,7 +68,7 @@ func (c *Client) get(url string) (*http.Response, error) {
 }
 
 // buildEndpoint builds API's endpoint and pre-defines
-// API Key and some other options on advance
+// API Key and some other options on advance.
 func (c *Client) buildEndpoint(params url.Values) string {
 	const units = "metric"
 

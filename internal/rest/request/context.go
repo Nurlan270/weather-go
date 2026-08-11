@@ -2,6 +2,7 @@ package request
 
 import (
 	"context"
+
 	"github.com/Nurlan270/weather-go/internal/entity"
 )
 

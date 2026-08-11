@@ -24,9 +24,12 @@ func (r *DBRepository) ListLocationsByUserID(userID int64) ([]*entity.Location, 
 	}
 
 	var locationsList []*entity.Location
+
 	for rows.Next() {
-		var name string
-		var lat, lon float64
+		var (
+			name     string
+			lat, lon float64
+		)
 
 		if err = rows.Scan(&name, &lat, &lon); err != nil {
 			return nil, fmt.Errorf("get lat, lon: %w", err)

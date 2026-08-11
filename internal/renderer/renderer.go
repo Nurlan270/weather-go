@@ -39,7 +39,11 @@ func (r *Renderer) RenderNotFound(w http.ResponseWriter, req *http.Request) erro
 func (r *Renderer) RenderTooManyRequests(w http.ResponseWriter, req *http.Request) error {
 	user := request.GetUserFromCtx(req.Context())
 
-	data := view.NewErrorViewData(view.MessageTooManyRequestsError, view.MessageTooManyRequestsError, user.Login)
+	data := view.NewErrorViewData(
+		view.MessageTooManyRequestsError,
+		view.MessageTooManyRequestsError,
+		user.Login,
+	)
 
 	return r.render(w, http.StatusTooManyRequests, "error", data)
 }

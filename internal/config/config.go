@@ -7,9 +7,10 @@ import (
 	"strings"
 	"time"
 
-	gpv "github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
+
+	gpv "github.com/go-playground/validator/v10"
 )
 
 const (
@@ -18,10 +19,10 @@ const (
 )
 
 type Config struct {
-	App         App         `mapstructure:"app" validate:"required"`
-	Session     Session     `mapstructure:"session" validate:"required"`
+	App         App         `mapstructure:"app"         validate:"required"`
+	Session     Session     `mapstructure:"session"     validate:"required"`
 	HTTPServer  HTTPServer  `mapstructure:"http_server" validate:"required"`
-	DB          DB          `mapstructure:"db" validate:"required"`
+	DB          DB          `mapstructure:"db"          validate:"required"`
 	OpenWeather OpenWeather `mapstructure:"openweather" validate:"required"`
 }
 
@@ -30,19 +31,19 @@ type App struct {
 }
 
 type Session struct {
-	Name      string        `mapstructure:"name" validate:"required"`
+	Name      string        `mapstructure:"name"       validate:"required"`
 	ExpiresIn time.Duration `mapstructure:"expires_in" validate:"required"`
 }
 
 type HTTPServer struct {
-	Address     string        `mapstructure:"address" validate:"required"`
-	Timeout     time.Duration `mapstructure:"timeout" validate:"required"`
+	Address     string        `mapstructure:"address"      validate:"required"`
+	Timeout     time.Duration `mapstructure:"timeout"      validate:"required"`
 	IdleTimeout time.Duration `mapstructure:"idle_timeout" validate:"required"`
 }
 type DB struct {
-	Host     string `mapstructure:"host" validate:"required"`
-	Port     string `mapstructure:"port" validate:"required"`
-	Name     string `mapstructure:"name" validate:"required"`
+	Host     string `mapstructure:"host"     validate:"required"`
+	Port     string `mapstructure:"port"     validate:"required"`
+	Name     string `mapstructure:"name"     validate:"required"`
 	Username string `mapstructure:"username" validate:"required"`
 	Password string `mapstructure:"password" validate:"required"`
 }

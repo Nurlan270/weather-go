@@ -3,16 +3,16 @@ package location
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Nurlan270/weather-go/internal/rest/openweather/response"
-	"github.com/Nurlan270/weather-go/internal/rest/request"
-	"github.com/lib/pq"
-	"github.com/lib/pq/pqerror"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
 
+	"github.com/lib/pq"
+	"github.com/lib/pq/pqerror"
+
 	"github.com/Nurlan270/weather-go/internal/entity"
+	"github.com/Nurlan270/weather-go/internal/rest/openweather/response"
+	"github.com/Nurlan270/weather-go/internal/rest/request"
 )
 
 type LocationRepository interface {
@@ -48,8 +48,6 @@ func (s *Service) SearchLocation(request request.SearchLocation) (*response.Loca
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, ErrNoResults
 	}
-
-	log.Println(resp.Status)
 
 	var location response.Location
 	if err = json.NewDecoder(resp.Body).Decode(&location); err != nil {
@@ -92,25 +90,40 @@ func (s *Service) ListLocationsByUserID(userID int64) ([]*entity.Location, error
 	}
 
 	var result []*entity.Location
+
 	for _, l := range locationsList {
-		stringLat := strconv.FormatFloat(l.Coordinates.Lat, 'f', -1, 64)
-		stringLon := strconv.FormatFloat(l.Coordinates.Lon, 'f', -1, 64)
+		//	Wrapped into func so defer can immediately
+		//	close resp.Body on the end of each iteration
+		location, err := func() (*entity.Location, error) {
+			stringLat := strconv.FormatFloat(l.Coordinates.Lat, 'f', -1, 64)
+			stringLon := strconv.FormatFloat(l.Coordinates.Lon, 'f', -1, 64)
 
-		resp, err := s.client.GetByCityNameAndCoordinates(l.Name, stringLat, stringLon)
+			resp, err := s.client.GetByCityNameAndCoordinates(l.Name, stringLat, stringLon)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get locations by coordinates: %w", err)
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode != http.StatusOK {
+				return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+			}
+
+			var location entity.Location
+			if err = json.NewDecoder(resp.Body).Decode(&location); err != nil {
+				return nil, fmt.Errorf("failed to decode location: %w", err)
+			}
+
+			//	Round values
+			location.Main.Temp = math.Round(location.Main.Temp)
+			location.Main.FeelsLike = math.Round(location.Main.FeelsLike)
+
+			return &location, nil
+		}()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get locations by coordinates: %w", err)
+			return nil, fmt.Errorf("failed to list locations: %w", err)
 		}
 
-		var location entity.Location
-		if err = json.NewDecoder(resp.Body).Decode(&location); err != nil {
-			return nil, fmt.Errorf("failed to decode location: %w", err)
-		}
-
-		//	Round values
-		location.Main.Temp = math.Round(location.Main.Temp)
-		location.Main.FeelsLike = math.Round(location.Main.FeelsLike)
-
-		result = append(result, &location)
+		result = append(result, location)
 	}
 
 	return result, nil
