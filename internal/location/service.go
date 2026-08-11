@@ -7,6 +7,7 @@ import (
 	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/lib/pq"
 	"github.com/lib/pq/pqerror"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -22,7 +23,7 @@ type LocationRepository interface {
 
 type LocationClient interface {
 	GetByCityName(query string) (*http.Response, error)
-	GetByCityNameAndCoordinates(name string, lat, lon float64) (*http.Response, error)
+	GetByCityNameAndCoordinates(name, lat, lon string) (*http.Response, error)
 }
 
 type Service struct {
@@ -48,15 +49,15 @@ func (s *Service) SearchLocation(request request.SearchLocation) (*response.Loca
 		return nil, ErrNoResults
 	}
 
+	log.Println(resp.Status)
+
 	var location response.Location
 	if err = json.NewDecoder(resp.Body).Decode(&location); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode location: %w", err)
 	}
 
-	//	Round values
+	//	Round Temperature
 	location.Main.Temp = math.Round(location.Main.Temp)
-	location.Main.TempMin = math.Round(location.Main.TempMin)
-	location.Main.TempMax = math.Round(location.Main.TempMax)
 
 	return &location, err
 }
@@ -92,7 +93,10 @@ func (s *Service) ListLocationsByUserID(userID int64) ([]*entity.Location, error
 
 	var result []*entity.Location
 	for _, l := range locationsList {
-		resp, err := s.client.GetByCityNameAndCoordinates(l.Name, l.Coordinates.Lat, l.Coordinates.Lon)
+		stringLat := strconv.FormatFloat(l.Coordinates.Lat, 'f', -1, 64)
+		stringLon := strconv.FormatFloat(l.Coordinates.Lon, 'f', -1, 64)
+
+		resp, err := s.client.GetByCityNameAndCoordinates(l.Name, stringLat, stringLon)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get locations by coordinates: %w", err)
 		}

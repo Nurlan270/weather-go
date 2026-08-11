@@ -20,6 +20,4 @@ type Sys struct {
 type Main struct {
 	Temp     float64 `json:"temp"`
 	Humidity int     `json:"humidity"`
-	TempMin  float64 `json:"temp_min"`
-	TempMax  float64 `json:"temp_max"`
 }

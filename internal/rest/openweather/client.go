@@ -2,10 +2,12 @@ package openweather
 
 import (
 	"fmt"
-	"net/http"
-
 	"github.com/Nurlan270/weather-go/internal/config"
+	"net/http"
+	"net/url"
 )
+
+const BaseEndpoint = "https://api.openweathermap.org/data/2.5/weather"
 
 type Client struct {
 	httpClient *http.Client
@@ -20,7 +22,10 @@ func NewClient(apiCfg config.OpenWeather) *Client {
 }
 
 func (c *Client) GetByCityName(query string) (*http.Response, error) {
-	endpoint := c.buildEndpoint(getByCityName, query)
+	var params = url.Values{}
+	params.Set("q", query)
+
+	endpoint := c.buildEndpoint(params)
 
 	resp, err := c.get(endpoint)
 	if err != nil {
@@ -30,8 +35,13 @@ func (c *Client) GetByCityName(query string) (*http.Response, error) {
 	return resp, nil
 }
 
-func (c *Client) GetByCityNameAndCoordinates(name string, lat, lon float64) (*http.Response, error) {
-	endpoint := c.buildEndpoint(getByCityNameAndCoordinates, name, lat, lon)
+func (c *Client) GetByCityNameAndCoordinates(name, lat, lon string) (*http.Response, error) {
+	var params = url.Values{}
+	params.Set("q", name)
+	params.Set("lat", lat)
+	params.Set("lon", lon)
+
+	endpoint := c.buildEndpoint(params)
 
 	resp, err := c.get(endpoint)
 	if err != nil {
@@ -58,10 +68,11 @@ func (c *Client) get(url string) (*http.Response, error) {
 
 // buildEndpoint builds API's endpoint and pre-defines
 // API Key and some other options on advance
-func (c *Client) buildEndpoint(endpoint string, a ...any) string {
+func (c *Client) buildEndpoint(params url.Values) string {
 	const units = "metric"
 
-	args := append([]any{c.apiCfg.ApiKey, units}, a...)
+	params.Set("appid", c.apiCfg.ApiKey)
+	params.Set("units", units)
 
-	return fmt.Sprintf(endpoint, args...)
+	return BaseEndpoint + "?" + params.Encode()
 }
