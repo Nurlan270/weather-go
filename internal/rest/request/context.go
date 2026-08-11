@@ -1,17 +1,20 @@
 package request
 
-import "context"
+import (
+	"context"
+	"github.com/Nurlan270/weather-go/internal/entity"
+)
 
 type contextKey struct {
 	name string
 }
 
-var LoginCtxKey = &contextKey{"login"}
+var UserCtxKey = &contextKey{"user"}
 
-func GetLoginFromCtx(ctx context.Context) string {
-	l, ok := ctx.Value(LoginCtxKey).(string)
+func GetUserFromCtx(ctx context.Context) *entity.User {
+	l, ok := ctx.Value(UserCtxKey).(*entity.User)
 	if !ok {
-		l = ""
+		l = nil
 	}
 
 	return l

@@ -67,8 +67,8 @@ func (m *AuthMiddleware) RequireAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		//	Set login to ctx, so it's accessible from handlers
-		ctx := context.WithValue(r.Context(), request.LoginCtxKey, u.Login)
+		//	Set user to ctx, so it's accessible from handlers
+		ctx := context.WithValue(r.Context(), request.UserCtxKey, u)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
