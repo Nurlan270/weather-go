@@ -1,37 +1,50 @@
 package home
 
 import (
+	"github.com/Nurlan270/weather-go/internal/home/view"
+	"github.com/Nurlan270/weather-go/internal/location"
+	"go.uber.org/zap"
 	"net/http"
 
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
 	"github.com/Nurlan270/weather-go/internal/rest/request"
-	"github.com/Nurlan270/weather-go/internal/view"
 )
 
 type Handler struct {
-	renderer *renderer.Renderer
-	log      *logger.Logger
+	locationSvc *location.Service
+	renderer    *renderer.Renderer
+	log         *logger.Logger
 }
 
 func NewHandler(
+	locationSvc *location.Service,
 	renderer *renderer.Renderer,
 	log *logger.Logger,
 ) *Handler {
 	return &Handler{
-		renderer: renderer,
-		log:      log,
+		locationSvc: locationSvc,
+		renderer:    renderer,
+		log:         log,
 	}
 }
 
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	const VIEW = "home"
 
-	login := request.GetLoginFromCtx(r.Context())
+	user := request.GetUserFromCtx(r.Context())
 
-	data := view.NewBaseViewData("Home", login)
+	locations, err := h.locationSvc.ListLocationsByUserID(user.ID)
+	if err != nil {
+		h.log.Error("list locations by user id failed", zap.Error(err))
 
-	if err := h.renderer.RenderView(w, http.StatusOK, VIEW, data); err != nil {
+		_ = h.renderer.RenderServerError(w, r)
+		return
+	}
+
+	data := view.NewHomeViewData("Home", user.Login, locations)
+
+	if err = h.renderer.RenderView(w, http.StatusOK, VIEW, data); err != nil {
 		h.log.ErrorRenderPage(err)
 		return
 	}

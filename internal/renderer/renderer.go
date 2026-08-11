@@ -22,32 +22,32 @@ func New(templates map[string]*template.Template) *Renderer {
 func (r *Renderer) RenderView(
 	w http.ResponseWriter,
 	code int,
-	page string,
+	view string,
 	data any,
 ) error {
-	return r.render(w, code, page, data)
+	return r.render(w, code, view, data)
 }
 
 func (r *Renderer) RenderNotFound(w http.ResponseWriter, req *http.Request) error {
-	login := request.GetLoginFromCtx(req.Context())
+	user := request.GetUserFromCtx(req.Context())
 
-	data := view.NewErrorViewData(view.MessageNotFoundError, view.MessageNotFoundError, login)
+	data := view.NewErrorViewData(view.MessageNotFoundError, view.MessageNotFoundError, user.Login)
 
 	return r.render(w, http.StatusNotFound, "error", data)
 }
 
 func (r *Renderer) RenderTooManyRequests(w http.ResponseWriter, req *http.Request) error {
-	login := request.GetLoginFromCtx(req.Context())
+	user := request.GetUserFromCtx(req.Context())
 
-	data := view.NewErrorViewData(view.MessageTooManyRequestsError, view.MessageTooManyRequestsError, login)
+	data := view.NewErrorViewData(view.MessageTooManyRequestsError, view.MessageTooManyRequestsError, user.Login)
 
 	return r.render(w, http.StatusTooManyRequests, "error", data)
 }
 
 func (r *Renderer) RenderServerError(w http.ResponseWriter, req *http.Request) error {
-	login := request.GetLoginFromCtx(req.Context())
+	user := request.GetUserFromCtx(req.Context())
 
-	data := view.NewErrorViewData(view.MessageServerError, view.MessageServerError, login)
+	data := view.NewErrorViewData(view.MessageServerError, view.MessageServerError, user.Login)
 
 	return r.render(w, http.StatusInternalServerError, "error", data)
 }
@@ -62,18 +62,18 @@ func (r *Renderer) Redirect(w http.ResponseWriter, req *http.Request, url string
 func (r *Renderer) render(
 	w http.ResponseWriter,
 	statusCode int,
-	page string,
+	view string,
 	data any,
 ) error {
-	tmpl, ok := r.templates[page]
+	tmpl, ok := r.templates[view]
 	if !ok {
-		return fmt.Errorf("template not found: %q", page)
+		return fmt.Errorf("template not found: %q", view)
 	}
 
 	r.writeMetaData(w, statusCode)
 
 	if err := tmpl.Execute(w, data); err != nil {
-		return fmt.Errorf("failed to execute template %q: %w", page, err)
+		return fmt.Errorf("failed to execute template %q: %w", view, err)
 	}
 
 	return nil

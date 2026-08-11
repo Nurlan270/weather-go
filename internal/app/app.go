@@ -19,9 +19,11 @@ import (
 	"github.com/Nurlan270/weather-go/internal/config"
 	"github.com/Nurlan270/weather-go/internal/db"
 	"github.com/Nurlan270/weather-go/internal/home"
+	"github.com/Nurlan270/weather-go/internal/location"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
 	mw "github.com/Nurlan270/weather-go/internal/rest/middleware"
+	"github.com/Nurlan270/weather-go/internal/rest/openweather"
 	"github.com/Nurlan270/weather-go/internal/user"
 	"github.com/Nurlan270/weather-go/internal/validator"
 
@@ -36,10 +38,12 @@ type App struct {
 	renderer  *renderer.Renderer
 	validator *validator.Validate
 	services  Services
+	owClient  *openweather.Client
 }
 
 type Services struct {
-	User *user.Service
+	User     *user.Service
+	Location *location.Service
 }
 
 func Run() {
@@ -58,9 +62,10 @@ func (a *App) setup() {
 	a.initLogger()
 	a.initDatabase()
 	a.initRenderer()
-	a.initServices()
 	a.initValidator()
 	a.initRouter()
+	a.initOpenWeatherClient()
+	a.initServices()
 
 	//	Registering app components
 	a.registerRoutes()
@@ -145,6 +150,12 @@ func (a *App) initRouter() {
 	a.router = r
 }
 
+func (a *App) initOpenWeatherClient() {
+	client := openweather.NewClient(a.config.OpenWeather)
+
+	a.owClient = client
+}
+
 func (a *App) initValidator() {
 	v := gpv.New(gpv.WithRequiredStructEnabled())
 
@@ -169,9 +180,11 @@ func (a *App) initValidator() {
 func (a *App) initServices() {
 	//	Repositories
 	userRepo := user.NewDBRepository(a.db)
+	locationRepo := location.NewDBRepository(a.db)
 
 	//	Services
 	a.services.User = user.NewService(userRepo, a.config.Session)
+	a.services.Location = location.NewService(locationRepo, a.owClient)
 }
 
 func (a *App) registerRoutes() {
@@ -182,8 +195,9 @@ func (a *App) registerRoutes() {
 	)
 
 	//	Handlers
-	homeH := home.NewHandler(a.renderer, a.logger)
+	homeH := home.NewHandler(a.services.Location, a.renderer, a.logger)
 	userH := user.NewHandler(a.services.User, a.validator, a.renderer, a.config.Session, a.logger)
+	locationH := location.NewHandler(a.services.Location, a.validator, a.renderer, a.logger)
 
 	//	Middlewares
 	authMW := mw.NewAuthMiddleware(a.services.User, a.renderer, a.config.Session, a.logger)
@@ -192,9 +206,15 @@ func (a *App) registerRoutes() {
 
 	//	Routes
 	a.router.Route("/", func(r chi.Router) {
+		//	Following routes need authenticated user
 		r.Use(authMW.RequireAuth)
 
 		r.Get("/", homeH.Index)
+
+		//	Locations
+		r.Get("/search", locationH.Index)
+		r.Post("/locations", locationH.AddLocation)
+		r.Post("/locations/{name}", locationH.DeleteLocation)
 
 		//	Sign out
 		a.router.With(

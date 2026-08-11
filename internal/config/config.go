@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	gpv "github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
@@ -17,32 +18,37 @@ const (
 )
 
 type Config struct {
-	App        App        `mapstructure:"app"`
-	Session    Session    `mapstructure:"session"`
-	HTTPServer HTTPServer `mapstructure:"http_server"`
-	DB         DB         `mapstructure:"db"`
+	App         App         `mapstructure:"app" validate:"required"`
+	Session     Session     `mapstructure:"session" validate:"required"`
+	HTTPServer  HTTPServer  `mapstructure:"http_server" validate:"required"`
+	DB          DB          `mapstructure:"db" validate:"required"`
+	OpenWeather OpenWeather `mapstructure:"openweather" validate:"required"`
 }
 
 type App struct {
-	Env string `mapstructure:"env"`
+	Env string `mapstructure:"env" validate:"required"`
 }
 
 type Session struct {
-	Name      string        `mapstructure:"name"`
-	ExpiresIn time.Duration `mapstructure:"expires_in"`
+	Name      string        `mapstructure:"name" validate:"required"`
+	ExpiresIn time.Duration `mapstructure:"expires_in" validate:"required"`
 }
 
 type HTTPServer struct {
-	Address     string        `mapstructure:"address"`
-	Timeout     time.Duration `mapstructure:"timeout"`
-	IdleTimeout time.Duration `mapstructure:"idle_timeout"`
+	Address     string        `mapstructure:"address" validate:"required"`
+	Timeout     time.Duration `mapstructure:"timeout" validate:"required"`
+	IdleTimeout time.Duration `mapstructure:"idle_timeout" validate:"required"`
 }
 type DB struct {
-	Host     string `mapstructure:"host"`
-	Port     string `mapstructure:"port"`
-	Name     string `mapstructure:"name"`
-	Username string `mapstructure:"username"`
-	Password string `mapstructure:"password"`
+	Host     string `mapstructure:"host" validate:"required"`
+	Port     string `mapstructure:"port" validate:"required"`
+	Name     string `mapstructure:"name" validate:"required"`
+	Username string `mapstructure:"username" validate:"required"`
+	Password string `mapstructure:"password" validate:"required"`
+}
+
+type OpenWeather struct {
+	ApiKey string `mapstructure:"api_key" validate:"required"`
 }
 
 func Load() (*Config, error) {
@@ -52,7 +58,7 @@ func Load() (*Config, error) {
 
 	env, err := getEnv("APP_ENV")
 	if err != nil {
-		return nil, fmt.Errorf("failed to get env variable: %w", err)
+		return nil, err
 	}
 
 	if env != EnvLocal && env != EnvProd {
@@ -67,7 +73,20 @@ func Load() (*Config, error) {
 	//	Viper setup
 	v := viper.New()
 	v.SetConfigFile(filepath.Join("config", env+".yml"))
-	v.AutomaticEnv()
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+
+	//	Bind variables from env file.
+	//	Dot notation used, because Viper by default uses dot notation.
+	//	It will then be treated as snake case as we set it above
+	//	(e.g. db.username is treated as DB_USERNAME from env file)
+	var keys = []string{
+		"db.username", "db.password",
+		"openweather.api_key",
+	}
+
+	if err = bindEnvs(v, keys...); err != nil {
+		return nil, err
+	}
 
 	//	Read config file
 	if err = v.ReadInConfig(); err != nil {
@@ -79,17 +98,38 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to decode into struct: %w", err)
 	}
 
+	//	Validate final config
+	validate := gpv.New(gpv.WithRequiredStructEnabled())
+
+	if err = validate.Struct(cfg); err != nil {
+		return nil, fmt.Errorf("failed to validate config: %w", err)
+	}
+
 	return &cfg, nil
 }
 
-// getEnv is a helper to easily get values
-// from .env file and return error on failure.
+// getEnv is a helper function which gets values
+// from env file. It returns env variable's value
+// and error if its value is empty or not set at all.
 func getEnv(key string) (string, error) {
-	v := os.Getenv(key)
+	v, ok := os.LookupEnv(key)
 
-	if strings.TrimSpace(v) == "" {
-		return "", fmt.Errorf("%q is not set in env file", key)
+	if ok && len(strings.TrimSpace(v)) != 0 {
+		return v, nil
 	}
 
-	return v, nil
+	return "", fmt.Errorf("%q is empty or not set in .env file", key)
+}
+
+// bindEnvs is a wrapper around Viper's BindEnv.
+// It's running BindEnv in a loop to easily bind
+// multiple env variables at once.
+func bindEnvs(v *viper.Viper, keys ...string) error {
+	for _, k := range keys {
+		if err := v.BindEnv(k); err != nil {
+			return fmt.Errorf("failed to bind: %w", err)
+		}
+	}
+
+	return nil
 }

@@ -28,7 +28,7 @@ func (r *DBRepository) GetUserBySID(sid string) (*entity.User, error) {
 
 	err := r.db.QueryRow(q, sid).Scan(&user.ID, &user.Login, &user.Password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, fmt.Errorf("get user: %w", err)
 	}
 
 	return &user, nil
@@ -43,7 +43,7 @@ func (r *DBRepository) GetUserByLogin(login string) (*entity.User, error) {
 
 	err := row.Scan(&user.ID, &user.Login, &user.Password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
+		return nil, fmt.Errorf("get user: %w", err)
 	}
 
 	return &user, nil
@@ -60,7 +60,7 @@ func (r *DBRepository) CreateUser(login, password string) (*entity.User, error) 
 
 	var user entity.User
 	if err := row.Scan(&user.ID, &user.Login); err != nil {
-		return nil, fmt.Errorf("failed to insert user: %w", err)
+		return nil, fmt.Errorf("insert user: %w", err)
 	}
 
 	return &user, nil
@@ -81,7 +81,7 @@ func (r *DBRepository) CreateSession(
 
 	var session entity.Session
 	if err := row.Scan(&session.ID, &session.UserID, &session.ExpiresAt); err != nil {
-		return nil, fmt.Errorf("failed to insert session: %w", err)
+		return nil, fmt.Errorf("insert session: %w", err)
 	}
 
 	return &session, nil

@@ -1,0 +1,52 @@
+{{ define "content" }}
+<section id="page-content">
+    <div class="container mt-4">
+        <div class="d-flex my-4">
+            <form id="search" action="/search" method="GET" class="input-group location-search-input-group me-3">
+                <input class="form-control" type="text" name="q" placeholder="Enter location"
+                       value="{{if $data := .Old.query}}{{$data}}{{end}}" required>
+                <button class="btn btn-outline-secondary btn-sm clear-input-button" type="button"
+                        onclick="this.previousElementSibling.value=''">
+                    &times;
+                </button>
+            </form>
+            <button class="btn btn-outline-success" type="submit" form="search">Search</button>
+        </div>
+
+        <div>
+            <h2>Locations:</h2>
+            <div class="row">
+                {{ if $errMsg := .Error.Message }}
+                <div class="row justify-content-center">
+                    <div class="col-12 col-lg-4 col-md-6 col-sm-12">
+                        <div class="alert alert-danger" role="alert">
+                            {{ $errMsg }}
+                        </div>
+                    </div>
+                </div>
+                {{ else }}
+                {{ with .Location }}
+                <div class="col-12 col-lg-3 col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ .Name }}</h5>
+                            <p class="card-text mb-1">Temperature: {{ .Main.Temp }} ℃</p>
+                            <p class="card-text mb-1">Latitude: {{ .Coordinates.Lat }}</p>
+                            <p class="card-text mb-1">Longitude: {{ .Coordinates.Lon }}</p>
+                            <p class="card-text mb-3">Country: {{ .Sys.Country }}</p>
+                            <form class="mt-auto" action="/locations" method="POST">
+                                <input type="hidden" name="name" value="{{ .Name }}">
+                                <input type="hidden" name="lat" value="{{ .Coordinates.Lat }}">
+                                <input type="hidden" name="lon" value="{{ .Coordinates.Lon }}">
+                                <button class="btn btn-primary w-100" type="submit">Add</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {{ end }}
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</section>
+{{ end }}

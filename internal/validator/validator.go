@@ -44,9 +44,15 @@ func (v *Validate) getMessage(f validator.FieldError) string {
 	case "min":
 		return fmt.Sprintf(Min, fName, f.Param())
 	case "eqfield":
-		return fmt.Sprintf(Eqfield, fName, f.Param())
+		return fmt.Sprintf(EqField, fName, f.Param())
 	case "login":
 		return fmt.Sprintf(Login, fName)
+	case "alphaspace":
+		return fmt.Sprintf(AlphaSpace, fName)
+	case "longitude":
+		return fmt.Sprintf(Longitude, fName)
+	case "latitude":
+		return fmt.Sprintf(Latitude, fName)
 	default:
 		return fmt.Sprintf(Default, fName, f.Tag())
 	}
