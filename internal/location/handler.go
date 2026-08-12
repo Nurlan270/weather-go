@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -14,6 +15,7 @@ import (
 	"github.com/Nurlan270/weather-go/internal/renderer"
 	"github.com/Nurlan270/weather-go/internal/rest/openweather/response"
 	"github.com/Nurlan270/weather-go/internal/rest/request"
+	"github.com/Nurlan270/weather-go/internal/user"
 	"github.com/Nurlan270/weather-go/internal/validator"
 	baseview "github.com/Nurlan270/weather-go/internal/view"
 )
@@ -42,11 +44,11 @@ func NewHandler(
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	const VIEW = "search"
 
-	user := request.GetUserFromCtx(r.Context())
+	u := user.FromRequest(r)
 
 	var location *response.Location
 
-	data := view.NewSearchViewData("Search Results", user.Login, location)
+	data := view.NewSearchViewData("Search Results", u.Login, location)
 
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 
@@ -76,7 +78,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.log.Error("could not get search results", zap.Error(err))
 
-		if err = h.renderer.RenderServerError(w, r); err != nil {
+		if err = h.renderer.RenderServerError(w, u.Login); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 
@@ -93,11 +95,11 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 	const VIEW = "search"
 
-	user := request.GetUserFromCtx(r.Context())
+	u := user.FromRequest(r)
 
 	var location *response.Location
 
-	data := view.NewSearchViewData("Search Results", user.Login, location)
+	data := view.NewSearchViewData("Search Results", u.Login, location)
 
 	if err := r.ParseForm(); err != nil {
 		h.log.Error("could not parse form", zap.Error(err))
@@ -133,7 +135,7 @@ func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//	Add new location
-	err := h.service.AddLocation(user.ID, reqLocation)
+	err := h.service.AddLocation(u.ID, reqLocation)
 
 	//	Location already exists
 	if errors.Is(err, ErrLocationAlreadyExists) {
@@ -149,7 +151,7 @@ func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.log.Error("could not add location", zap.Error(err))
 
-		if err = h.renderer.RenderServerError(w, r); err != nil {
+		if err = h.renderer.RenderServerError(w, u.Login); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 
@@ -161,13 +163,18 @@ func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteLocation(w http.ResponseWriter, r *http.Request) {
-	user := request.GetUserFromCtx(r.Context())
-	name := chi.URLParam(r, "name")
+	u := user.FromRequest(r)
 
-	if err := h.service.DeleteLocation(user.ID, name); err != nil {
+	int64Id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		h.log.Error("could not parse id", zap.Error(err))
+		return
+	}
+
+	if err = h.service.DeleteLocation(int64Id, u.ID); err != nil {
 		h.log.Error("could not delete location", zap.Error(err))
 
-		if err = h.renderer.RenderServerError(w, r); err != nil {
+		if err = h.renderer.RenderServerError(w, u.Login); err != nil {
 			h.log.ErrorRenderPage(err)
 		}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/httprate"
 
 	"github.com/Nurlan270/weather-go/internal/renderer"
+	"github.com/Nurlan270/weather-go/internal/user"
 )
 
 type RateLimitMiddleware struct {
@@ -46,7 +47,8 @@ func (m *RateLimitMiddleware) LimitByEndpoint(
 
 func (m *RateLimitMiddleware) renderPage() httprate.Option {
 	return httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
-		_ = m.renderer.RenderTooManyRequests(w, r)
+		u := user.FromRequest(r)
+		_ = m.renderer.RenderTooManyRequests(w, u.Login)
 	})
 }
 

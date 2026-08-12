@@ -9,7 +9,7 @@ import (
 	"github.com/Nurlan270/weather-go/internal/location"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
-	"github.com/Nurlan270/weather-go/internal/rest/request"
+	"github.com/Nurlan270/weather-go/internal/user"
 )
 
 type Handler struct {
@@ -33,18 +33,18 @@ func NewHandler(
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 	const VIEW = "home"
 
-	user := request.GetUserFromCtx(r.Context())
+	u := user.FromRequest(r)
 
-	locations, err := h.locationSvc.ListLocationsByUserID(user.ID)
+	locations, err := h.locationSvc.ListLocationsByUserID(u.ID)
 	if err != nil {
 		h.log.Error("list locations by user id failed", zap.Error(err))
 
-		_ = h.renderer.RenderServerError(w, r)
+		_ = h.renderer.RenderServerError(w, u.Login)
 
 		return
 	}
 
-	data := view.NewHomeViewData("Home", user.Login, locations)
+	data := view.NewHomeViewData("Home", u.Login, locations)
 
 	if err = h.renderer.RenderView(w, http.StatusOK, VIEW, data); err != nil {
 		h.log.ErrorRenderPage(err)

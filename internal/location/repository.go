@@ -3,7 +3,6 @@ package location
 import (
 	"database/sql"
 	"fmt"
-
 	"github.com/Nurlan270/weather-go/internal/entity"
 )
 
@@ -16,7 +15,12 @@ func NewDBRepository(db *sql.DB) *DBRepository {
 }
 
 func (r *DBRepository) ListLocationsByUserID(userID int64) ([]*entity.Location, error) {
-	const q = "SELECT name, latitude, longitude FROM locations WHERE user_id = $1 ORDER BY id DESC"
+	const q = `
+		SELECT id, name, latitude, longitude
+		FROM locations
+		WHERE user_id = $1
+		ORDER BY id DESC
+	`
 
 	rows, err := r.db.Query(q, userID)
 	if err != nil {
@@ -27,15 +31,17 @@ func (r *DBRepository) ListLocationsByUserID(userID int64) ([]*entity.Location, 
 
 	for rows.Next() {
 		var (
+			id       int64
 			name     string
 			lat, lon float64
 		)
 
-		if err = rows.Scan(&name, &lat, &lon); err != nil {
+		if err = rows.Scan(&id, &name, &lat, &lon); err != nil {
 			return nil, fmt.Errorf("get lat, lon: %w", err)
 		}
 
 		location := &entity.Location{
+			ID:   id,
 			Name: name,
 			Coordinates: entity.Coordinates{
 				Lat: lat,
@@ -59,10 +65,10 @@ func (r *DBRepository) CreateLocation(userID int64, name string, lat, lon float6
 	return nil
 }
 
-func (r *DBRepository) DeleteLocation(userID int64, name string) error {
-	const q = "DELETE FROM locations WHERE user_id = $1 AND name = $2"
+func (r *DBRepository) DeleteLocation(id, userID int64) error {
+	const q = "DELETE FROM locations WHERE id = $1 AND user_id = $2"
 
-	if _, err := r.db.Exec(q, userID, name); err != nil {
+	if _, err := r.db.Exec(q, id, userID); err != nil {
 		return fmt.Errorf("delete location: %w", err)
 	}
 

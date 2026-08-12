@@ -141,7 +141,9 @@ func (a *App) initRouter() {
 
 	//	404-Page custom setup
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
-		err := a.renderer.RenderNotFound(w, r)
+		u := user.FromRequest(r)
+
+		err := a.renderer.RenderNotFound(w, u.Login)
 		if err != nil {
 			a.logger.ErrorRenderPage(err)
 		}
@@ -214,7 +216,7 @@ func (a *App) registerRoutes() {
 		//	Locations
 		r.Get("/search", locationH.Index)
 		r.Post("/locations", locationH.AddLocation)
-		r.Post("/locations/{name}", locationH.DeleteLocation)
+		r.Post("/locations/{id}", locationH.DeleteLocation)
 
 		//	Sign out
 		a.router.With(

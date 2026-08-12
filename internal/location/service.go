@@ -18,7 +18,7 @@ import (
 type LocationRepository interface {
 	ListLocationsByUserID(userID int64) ([]*entity.Location, error)
 	CreateLocation(userID int64, name string, lat, lon float64) error
-	DeleteLocation(userID int64, name string) error
+	DeleteLocation(id, userID int64) error
 }
 
 type LocationClient interface {
@@ -113,6 +113,9 @@ func (s *Service) ListLocationsByUserID(userID int64) ([]*entity.Location, error
 				return nil, fmt.Errorf("failed to decode location: %w", err)
 			}
 
+			//	Re-assign ID
+			location.ID = l.ID
+
 			//	Round values
 			location.Main.Temp = math.Round(location.Main.Temp)
 			location.Main.FeelsLike = math.Round(location.Main.FeelsLike)
@@ -129,8 +132,8 @@ func (s *Service) ListLocationsByUserID(userID int64) ([]*entity.Location, error
 	return result, nil
 }
 
-func (s *Service) DeleteLocation(userID int64, name string) error {
-	if err := s.repo.DeleteLocation(userID, name); err != nil {
+func (s *Service) DeleteLocation(id, userID int64) error {
+	if err := s.repo.DeleteLocation(id, userID); err != nil {
 		return fmt.Errorf("failed to delete location: %w", err)
 	}
 
