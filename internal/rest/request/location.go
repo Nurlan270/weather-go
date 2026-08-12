@@ -5,7 +5,7 @@ type SearchLocation struct {
 }
 
 type AddLocation struct {
-	Name string `json:"name" validate:"required"`
+	Name string `json:"name" validate:"required,max=70"`
 	Lat  string `json:"lat"  validate:"required,latitude"`
 	Lon  string `json:"lon"  validate:"required,longitude"`
 }

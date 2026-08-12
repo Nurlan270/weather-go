@@ -94,8 +94,6 @@ func (a *App) initDatabase() {
 }
 
 func (a *App) initRenderer() {
-	templates := make(map[string]*template.Template)
-
 	mainDir, _ := filepath.Glob("view/pages/*.html")
 	subDirs, _ := filepath.Glob("view/pages/*/*.html")
 
@@ -105,7 +103,9 @@ func (a *App) initRenderer() {
 
 	allFiles := append(mainDir, subDirs...)
 
-	//	Parse view
+	templates := make(map[string]*template.Template, len(allFiles))
+
+	//	Parse views
 	for _, tmplPath := range allFiles {
 		tmpl, err := template.ParseFiles(
 			"view/index.html", // Root template file
