@@ -36,7 +36,7 @@ func (m *LoggerMiddleware) Log(next http.Handler) http.Handler {
 			log.Info("Request information",
 				zap.Int("status", ww.Status()),
 				zap.Int("size", ww.BytesWritten()),
-				zap.Duration("duration", time.Since(t1).Round(time.Millisecond)),
+				zap.Duration("duration", time.Since(t1).Round(10*time.Millisecond)),
 			)
 		}()
 
