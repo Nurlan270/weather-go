@@ -2,44 +2,50 @@ package location
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
 	"strconv"
 
+	"github.com/allegro/bigcache"
 	"github.com/lib/pq"
 	"github.com/lib/pq/pqerror"
 
+	"github.com/Nurlan270/weather-go/internal/cache"
 	"github.com/Nurlan270/weather-go/internal/entity"
 	"github.com/Nurlan270/weather-go/internal/rest/openweather/response"
 	"github.com/Nurlan270/weather-go/internal/rest/request"
 )
 
 type LocationRepository interface {
-	ListLocationsByUserID(userID int64) ([]*entity.Location, error)
+	ListLocationIdsByUserID(userID int64) ([]int64, error)
+	GetLocationByID(id int64) (entity.Location, error)
 	CreateLocation(userID int64, name string, lat, lon float64) error
 	DeleteLocation(id, userID int64) error
 }
 
 type LocationClient interface {
-	GetByCityName(query string) (*http.Response, error)
-	GetByCityNameAndCoordinates(name, lat, lon string) (*http.Response, error)
+	GetCitiesInfo(cityName string) (*http.Response, error)
+	GetCityWeather(cityName, lat, lon string) (*http.Response, error)
 }
 
 type Service struct {
 	repo   LocationRepository
 	client LocationClient
+	cache  *cache.Cache
 }
 
-func NewService(repo LocationRepository, client LocationClient) *Service {
+func NewService(repo LocationRepository, client LocationClient, cache *cache.Cache) *Service {
 	return &Service{
 		repo:   repo,
 		client: client,
+		cache:  cache,
 	}
 }
 
-func (s *Service) SearchLocation(request request.SearchLocation) (*response.Location, error) {
-	resp, err := s.client.GetByCityName(request.Query)
+func (s *Service) SearchLocations(request request.SearchLocation) ([]*response.SearchLocation, error) {
+	resp, err := s.client.GetCitiesInfo(request.Query)
 	if err != nil {
 		return nil, err
 	}
@@ -49,15 +55,12 @@ func (s *Service) SearchLocation(request request.SearchLocation) (*response.Loca
 		return nil, ErrNoResults
 	}
 
-	var location response.Location
-	if err = json.NewDecoder(resp.Body).Decode(&location); err != nil {
+	var locations []*response.SearchLocation
+	if err = json.NewDecoder(resp.Body).Decode(&locations); err != nil {
 		return nil, fmt.Errorf("failed to decode location: %w", err)
 	}
 
-	//	Round Temperature
-	location.Main.Temp = math.Round(location.Main.Temp)
-
-	return &location, err
+	return locations, err
 }
 
 func (s *Service) AddLocation(userID int64, request request.AddLocation) error {
@@ -83,59 +86,90 @@ func (s *Service) AddLocation(userID int64, request request.AddLocation) error {
 	return nil
 }
 
-func (s *Service) ListLocationsByUserID(userID int64) ([]*entity.Location, error) {
-	locationsList, err := s.repo.ListLocationsByUserID(userID)
+func (s *Service) ListLocationsByUser(user *entity.User) ([]*entity.Location, error) {
+	// 1. Load IDs from DB
+	locationIDs, err := s.repo.ListLocationIdsByUserID(user.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list locations: %w", err)
+		return nil, fmt.Errorf("failed to get locations from db: %w", err)
 	}
 
-	var result []*entity.Location
+	result := make([]*entity.Location, 0, len(locationIDs))
 
-	for _, l := range locationsList {
-		//	Wrapped into func so defer can immediately
-		//	close resp.Body on the end of each iteration
-		location, err := func() (*entity.Location, error) {
-			stringLat := strconv.FormatFloat(l.Coordinates.Lat, 'f', -1, 64)
-			stringLon := strconv.FormatFloat(l.Coordinates.Lon, 'f', -1, 64)
+	for _, locationID := range locationIDs {
+		locationKey := cache.BuildKey(cache.KeyUserLocations, user.ID, locationID)
 
-			resp, err := s.client.GetByCityNameAndCoordinates(l.Name, stringLat, stringLon)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get locations by coordinates: %w", err)
-			}
-			defer resp.Body.Close()
-
-			if resp.StatusCode != http.StatusOK {
-				return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-			}
-
-			var location entity.Location
-			if err = json.NewDecoder(resp.Body).Decode(&location); err != nil {
-				return nil, fmt.Errorf("failed to decode location: %w", err)
-			}
-
-			//	Re-assign ID
-			location.ID = l.ID
-
-			//	Round values
-			location.Main.Temp = math.Round(location.Main.Temp)
-			location.Main.FeelsLike = math.Round(location.Main.FeelsLike)
-
-			return &location, nil
-		}()
-		if err != nil {
-			return nil, fmt.Errorf("failed to list locations: %w", err)
+		var location entity.Location
+		if err = s.cache.GetInto(locationKey, &location); err == nil {
+			//	2. Cache hit: append location to result, otherwise skip
+			result = append(result, &location)
+			continue
 		}
 
-		result = append(result, location)
+		if !errors.Is(err, bigcache.ErrEntryNotFound) {
+			return nil, fmt.Errorf("failed to get location from cache: %w", err)
+		}
+
+		//	3. Cache miss: get location from DB
+		location, err = s.repo.GetLocationByID(locationID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get location by id %d: %w", locationID, err)
+		}
+
+		//	4. Cache miss: call client and put data into cache
+		location, err = s.fetchAndCacheLocation(user.ID, location)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch and cache location by id %d: %w", locationID, err)
+		}
+
+		result = append(result, &location)
 	}
 
 	return result, nil
 }
 
-func (s *Service) DeleteLocation(id, userID int64) error {
-	if err := s.repo.DeleteLocation(id, userID); err != nil {
-		return fmt.Errorf("failed to delete location: %w", err)
+func (s *Service) DeleteLocation(id int64, user *entity.User) error {
+	if err := s.repo.DeleteLocation(id, user.ID); err != nil {
+		return fmt.Errorf("failed to delete location from db: %w", err)
+	}
+
+	key := cache.BuildKey(cache.KeyUserLocations, user.ID, id)
+	if err := s.cache.Del(key); err != nil && !errors.Is(err, bigcache.ErrEntryNotFound) {
+		return fmt.Errorf("failed to delete location from cache: %w", err)
 	}
 
 	return nil
+}
+
+func (s *Service) fetchAndCacheLocation(userID int64, location entity.Location) (entity.Location, error) {
+	lat := strconv.FormatFloat(location.Coordinates.Lat, 'f', -1, 64)
+	lon := strconv.FormatFloat(location.Coordinates.Lon, 'f', -1, 64)
+
+	//	Call API to get fresh weather info
+	resp, err := s.client.GetCityWeather(location.Name, lat, lon)
+	if err != nil {
+		return entity.Location{}, fmt.Errorf("failed to fetch location: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var result entity.Location
+
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return entity.Location{}, fmt.Errorf("failed to deserialize location: %w", err)
+	}
+
+	//	Re-assign API's ID to this app's ID
+	result.ID = location.ID
+
+	//	Round values
+	result.Main.Temp = math.Round(result.Main.Temp)
+	result.Main.FeelsLike = math.Round(result.Main.FeelsLike)
+
+	locationKey := cache.BuildKey(cache.KeyUserLocations, userID, location.ID)
+
+	//	Cache location
+	if err = s.cache.Set(locationKey, result); err != nil {
+		return entity.Location{}, fmt.Errorf("failed to cache location: %w", err)
+	}
+
+	return result, nil
 }

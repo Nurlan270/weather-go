@@ -8,7 +8,14 @@ import (
 	"github.com/Nurlan270/weather-go/internal/config"
 )
 
-const BaseEndpoint = "https://api.openweathermap.org/data/2.5/weather"
+const (
+	BaseURL           = "https://api.openweathermap.org"
+	GeocodingEndpoint = BaseURL + "/geo/1.0/direct"
+	WeatherEndpoint   = BaseURL + "/data/2.5/weather"
+
+	//	Limit is a maximum number of locations that can be returned at once (max. 5)
+	Limit = "5"
+)
 
 type Client struct {
 	httpClient *http.Client
@@ -22,11 +29,12 @@ func NewClient(apiCfg config.OpenWeather) *Client {
 	}
 }
 
-func (c *Client) GetByCityName(query string) (*http.Response, error) {
-	var params = url.Values{}
-	params.Set("q", query)
+func (c *Client) GetCitiesInfo(cityName string) (*http.Response, error) {
+	params := url.Values{}
+	params.Set("q", cityName)
+	params.Set("limit", Limit)
 
-	endpoint := c.buildEndpoint(params)
+	endpoint := c.buildEndpoint(GeocodingEndpoint, params)
 
 	resp, err := c.get(endpoint)
 	if err != nil {
@@ -36,13 +44,12 @@ func (c *Client) GetByCityName(query string) (*http.Response, error) {
 	return resp, nil
 }
 
-func (c *Client) GetByCityNameAndCoordinates(name, lat, lon string) (*http.Response, error) {
-	var params = url.Values{}
-	params.Set("q", name)
+func (c *Client) GetCityWeather(cityName, lat, lon string) (*http.Response, error) {
+	params := url.Values{}
 	params.Set("lat", lat)
 	params.Set("lon", lon)
 
-	endpoint := c.buildEndpoint(params)
+	endpoint := c.buildEndpoint(WeatherEndpoint, params)
 
 	resp, err := c.get(endpoint)
 	if err != nil {
@@ -69,11 +76,11 @@ func (c *Client) get(url string) (*http.Response, error) {
 
 // buildEndpoint builds API's endpoint and pre-defines
 // API Key and some other options on advance.
-func (c *Client) buildEndpoint(params url.Values) string {
+func (c *Client) buildEndpoint(endpoint string, params url.Values) string {
 	const units = "metric"
 
 	params.Set("appid", c.apiCfg.ApiKey)
 	params.Set("units", units)
 
-	return BaseEndpoint + "?" + params.Encode()
+	return endpoint + "?" + params.Encode()
 }

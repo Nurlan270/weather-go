@@ -25,19 +25,18 @@
                     </div>
                 </div>
                 {{ else }}
-                {{ with .Location }}
+                {{ range .Locations }}
                 <div class="col-12 col-lg-3 col-md-6 mb-4">
                     <div class="card h-100">
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title">{{ .Name }}</h5>
-                            <p class="card-text mb-1">Temperature: {{ .Main.Temp }} ℃</p>
-                            <p class="card-text mb-1">Latitude: {{ .Coordinates.Lat }}</p>
-                            <p class="card-text mb-1">Longitude: {{ .Coordinates.Lon }}</p>
-                            <p class="card-text mb-3">Country: {{ .Sys.Country }}</p>
+                            <p class="card-text mb-1">Latitude: {{ .Lat }}</p>
+                            <p class="card-text mb-1">Longitude: {{ .Lon }}</p>
+                            <p class="card-text mb-3">Country: {{ .Country }}</p>
                             <form class="mt-auto" action="/locations" method="POST">
                                 <input type="hidden" name="name" value="{{ .Name }}">
-                                <input type="hidden" name="lat" value="{{ .Coordinates.Lat }}">
-                                <input type="hidden" name="lon" value="{{ .Coordinates.Lon }}">
+                                <input type="hidden" name="lat" value="{{ .Lat }}">
+                                <input type="hidden" name="lon" value="{{ .Lon }}">
                                 <button class="btn btn-primary w-100" type="submit">Add</button>
                             </form>
                         </div>

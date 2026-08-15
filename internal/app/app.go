@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 
+	"github.com/Nurlan270/weather-go/internal/cache"
 	"github.com/Nurlan270/weather-go/internal/config"
 	"github.com/Nurlan270/weather-go/internal/db"
 	"github.com/Nurlan270/weather-go/internal/home"
@@ -37,6 +38,7 @@ type App struct {
 	db        *sql.DB
 	renderer  *renderer.Renderer
 	validator *validator.Validate
+	cache     *cache.Cache
 	services  Services
 	owClient  *openweather.Client
 }
@@ -64,6 +66,7 @@ func (a *App) setup() {
 	a.initRenderer()
 	a.initValidator()
 	a.initRouter()
+	a.initCache()
 	a.initOpenWeatherClient()
 	a.initServices()
 
@@ -152,6 +155,10 @@ func (a *App) initRouter() {
 	a.router = r
 }
 
+func (a *App) initCache() {
+	a.cache = cache.New(a.config.Cache, a.logger)
+}
+
 func (a *App) initOpenWeatherClient() {
 	client := openweather.NewClient(a.config.OpenWeather)
 
@@ -186,7 +193,7 @@ func (a *App) initServices() {
 
 	//	Services
 	a.services.User = user.NewService(userRepo, a.config.Session)
-	a.services.Location = location.NewService(locationRepo, a.owClient)
+	a.services.Location = location.NewService(locationRepo, a.owClient, a.cache)
 }
 
 func (a *App) registerRoutes() {

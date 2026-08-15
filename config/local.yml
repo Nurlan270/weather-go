@@ -9,3 +9,5 @@ db:
 session:
   name: weather_tracker
   expires_in: 336h # 14 days
+cache:
+  expires_in: 15m

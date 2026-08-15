@@ -13,7 +13,6 @@ import (
 	"github.com/Nurlan270/weather-go/internal/location/view"
 	"github.com/Nurlan270/weather-go/internal/logger"
 	"github.com/Nurlan270/weather-go/internal/renderer"
-	"github.com/Nurlan270/weather-go/internal/rest/openweather/response"
 	"github.com/Nurlan270/weather-go/internal/rest/request"
 	"github.com/Nurlan270/weather-go/internal/user"
 	"github.com/Nurlan270/weather-go/internal/validator"
@@ -46,9 +45,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 	u := user.FromRequest(r)
 
-	var location *response.Location
-
-	data := view.NewSearchViewData("Search Results", u.Login, location)
+	data := view.NewSearchViewData("Search Results", u.Login, nil)
 
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 
@@ -64,7 +61,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	location, err := h.service.SearchLocation(reqLocation)
+	locations, err := h.service.SearchLocations(reqLocation)
 	if errors.Is(err, ErrNoResults) {
 		data.Error.Message = fmt.Sprintf(baseview.MessageNoResults, query)
 
@@ -85,7 +82,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data.Location = location
+	data.Locations = locations
 	if err = h.renderer.RenderView(w, http.StatusOK, VIEW, data); err != nil {
 		h.log.ErrorRenderPage(err)
 		return
@@ -97,9 +94,7 @@ func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 
 	u := user.FromRequest(r)
 
-	var location *response.Location
-
-	data := view.NewSearchViewData("Search Results", u.Login, location)
+	data := view.NewSearchViewData("Search Results", u.Login, nil)
 
 	if err := r.ParseForm(); err != nil {
 		h.log.Error("could not parse form", zap.Error(err))
@@ -137,18 +132,7 @@ func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 	//	Add new location
 	err := h.service.AddLocation(u.ID, reqLocation)
 
-	//	Location already exists
-	if errors.Is(err, ErrLocationAlreadyExists) {
-		data.Error.Message = baseview.MessageLocationAlreadyAdded
-
-		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
-			h.log.ErrorRenderPage(err)
-		}
-
-		return
-	}
-
-	if err != nil {
+	if err != nil && !errors.Is(err, ErrLocationAlreadyExists) {
 		h.log.Error("could not add location", zap.Error(err))
 
 		if err = h.renderer.RenderServerError(w, u.Login); err != nil {
@@ -171,7 +155,7 @@ func (h *Handler) DeleteLocation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = h.service.DeleteLocation(int64Id, u.ID); err != nil {
+	if err = h.service.DeleteLocation(int64Id, u); err != nil {
 		h.log.Error("could not delete location", zap.Error(err))
 
 		if err = h.renderer.RenderServerError(w, u.Login); err != nil {

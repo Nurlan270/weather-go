@@ -21,13 +21,13 @@ type Logger struct {
 }
 
 func New(env string) *Logger {
-	enc := getEncoder(env)
+	encoder := getEncoder(env)
 
 	ws := getWriteSyncer(env)
 
-	enab := getLevelEnabler(env)
+	enabler := getLevelEnabler(env)
 
-	core := zapcore.NewCore(enc, ws, enab)
+	core := zapcore.NewCore(encoder, ws, enabler)
 
 	zapLogger := zap.New(core, zap.AddCaller())
 
@@ -40,21 +40,26 @@ func (l *Logger) ErrorRenderPage(err error) {
 	)
 }
 
+// Printf is used by BigCache package.
+func (l *Logger) Printf(format string, v ...interface{}) {
+	l.Warn(fmt.Sprintf(format, v...))
+}
+
 func getEncoder(env string) zapcore.Encoder {
 	encoderCfg := buildEncoderConfig(env)
 
-	var e zapcore.Encoder
+	var encoder zapcore.Encoder
 
 	switch env {
 	case EnvLocal:
-		e = zapcore.NewConsoleEncoder(encoderCfg)
+		encoder = zapcore.NewConsoleEncoder(encoderCfg)
 	case EnvProd:
-		e = zapcore.NewJSONEncoder(encoderCfg)
+		encoder = zapcore.NewJSONEncoder(encoderCfg)
 	default:
-		e = zapcore.NewJSONEncoder(encoderCfg)
+		encoder = zapcore.NewJSONEncoder(encoderCfg)
 	}
 
-	return e
+	return encoder
 }
 
 func getWriteSyncer(env string) zapcore.WriteSyncer {
@@ -73,18 +78,18 @@ func getWriteSyncer(env string) zapcore.WriteSyncer {
 }
 
 func getLevelEnabler(env string) zapcore.LevelEnabler {
-	var le zapcore.LevelEnabler
+	var enabler zapcore.LevelEnabler
 
 	switch env {
 	case EnvLocal:
-		le = zapcore.DebugLevel
+		enabler = zapcore.DebugLevel
 	case EnvProd:
-		le = zapcore.InfoLevel
+		enabler = zapcore.InfoLevel
 	default:
-		le = zapcore.InfoLevel
+		enabler = zapcore.InfoLevel
 	}
 
-	return le
+	return enabler
 }
 
 func buildEncoderConfig(env string) zapcore.EncoderConfig {

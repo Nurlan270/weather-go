@@ -3,6 +3,7 @@ package location
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/Nurlan270/weather-go/internal/entity"
 )
 
@@ -14,9 +15,9 @@ func NewDBRepository(db *sql.DB) *DBRepository {
 	return &DBRepository{db: db}
 }
 
-func (r *DBRepository) ListLocationsByUserID(userID int64) ([]*entity.Location, error) {
+func (r *DBRepository) ListLocationIdsByUserID(userID int64) ([]int64, error) {
 	const q = `
-		SELECT id, name, latitude, longitude
+		SELECT id
 		FROM locations
 		WHERE user_id = $1
 		ORDER BY id DESC
@@ -24,35 +25,43 @@ func (r *DBRepository) ListLocationsByUserID(userID int64) ([]*entity.Location, 
 
 	rows, err := r.db.Query(q, userID)
 	if err != nil {
-		return nil, fmt.Errorf("query lat, lon: %w", err)
+		return nil, fmt.Errorf("query location id: %w", err)
 	}
 
-	var locationsList []*entity.Location
+	var ids []int64
 
 	for rows.Next() {
-		var (
-			id       int64
-			name     string
-			lat, lon float64
-		)
+		var id int64
 
-		if err = rows.Scan(&id, &name, &lat, &lon); err != nil {
-			return nil, fmt.Errorf("get lat, lon: %w", err)
+		if err = rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("get location id: %w", err)
 		}
 
-		location := &entity.Location{
-			ID:   id,
-			Name: name,
-			Coordinates: entity.Coordinates{
-				Lat: lat,
-				Lon: lon,
-			},
-		}
-
-		locationsList = append(locationsList, location)
+		ids = append(ids, id)
 	}
 
-	return locationsList, nil
+	return ids, nil
+}
+
+func (r *DBRepository) GetLocationByID(id int64) (entity.Location, error) {
+	const q = `
+		SELECT id, name, latitude, longitude
+		FROM locations
+		WHERE id = $1
+		ORDER BY id DESC
+	`
+
+	var location entity.Location
+	if err := r.db.QueryRow(q, id).Scan(
+		&location.ID,
+		&location.Name,
+		&location.Coordinates.Lat,
+		&location.Coordinates.Lon,
+	); err != nil {
+		return entity.Location{}, fmt.Errorf("query location: %w", err)
+	}
+
+	return location, nil
 }
 
 func (r *DBRepository) CreateLocation(userID int64, name string, lat, lon float64) error {

@@ -66,7 +66,7 @@ func (r *Renderer) render(
 	r.writeMetaData(w, statusCode)
 
 	if err := tmpl.Execute(w, data); err != nil {
-		return fmt.Errorf("failed to execute template %q: %w", view, err)
+		return fmt.Errorf("failed to execute template: %w", err)
 	}
 
 	return nil

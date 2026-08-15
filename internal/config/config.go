@@ -21,6 +21,7 @@ const (
 type Config struct {
 	App         App         `mapstructure:"app"         validate:"required"`
 	Session     Session     `mapstructure:"session"     validate:"required"`
+	Cache       Cache       `mapstructure:"cache"       validate:"required"`
 	HTTPServer  HTTPServer  `mapstructure:"http_server" validate:"required"`
 	DB          DB          `mapstructure:"db"          validate:"required"`
 	OpenWeather OpenWeather `mapstructure:"openweather" validate:"required"`
@@ -32,6 +33,10 @@ type App struct {
 
 type Session struct {
 	Name      string        `mapstructure:"name"       validate:"required"`
+	ExpiresIn time.Duration `mapstructure:"expires_in" validate:"required"`
+}
+
+type Cache struct {
 	ExpiresIn time.Duration `mapstructure:"expires_in" validate:"required"`
 }
 

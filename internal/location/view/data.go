@@ -7,12 +7,12 @@ import (
 
 type SearchViewData struct {
 	view.BaseViewData
-	Location *response.Location
+	Locations []*response.SearchLocation
 }
 
-func NewSearchViewData(title, login string, location *response.Location) *SearchViewData {
+func NewSearchViewData(title, login string, locations []*response.SearchLocation) *SearchViewData {
 	return &SearchViewData{
 		BaseViewData: *view.NewBaseViewData(title, login),
-		Location:     location,
+		Locations:    locations,
 	}
 }

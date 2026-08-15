@@ -52,7 +52,7 @@ formatters:
       tab-len: 4
       shorten-comments: true
       reformat-tags: true
-      chain-split-dots: true
+      chain-split-dots: false
 
 output:
   sort-order:
