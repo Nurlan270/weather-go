@@ -40,7 +40,7 @@ func NewHandler(
 	}
 }
 
-func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	const VIEW = "search"
 
 	u := user.FromRequest(r)

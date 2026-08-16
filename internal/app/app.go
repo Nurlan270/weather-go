@@ -221,7 +221,7 @@ func (a *App) registerRoutes() {
 		r.Get("/", homeH.Index)
 
 		//	Locations
-		r.Get("/search", locationH.Index)
+		r.Get("/search", locationH.Search)
 		r.Post("/locations", locationH.AddLocation)
 		r.Post("/locations/{id}", locationH.DeleteLocation)
 

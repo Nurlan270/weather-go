@@ -27,7 +27,7 @@ func (m *LoggerMiddleware) Log(next http.Handler) http.Handler {
 			zap.String("method", r.Method),
 			zap.String("path", r.URL.Path),
 			zap.Time("timestamp", time.Now().UTC()),
-		)
+		).WithOptions(zap.WithCaller(false))
 
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 

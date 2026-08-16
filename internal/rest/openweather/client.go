@@ -44,7 +44,7 @@ func (c *Client) GetCitiesInfo(cityName string) (*http.Response, error) {
 	return resp, nil
 }
 
-func (c *Client) GetCityWeather(cityName, lat, lon string) (*http.Response, error) {
+func (c *Client) GetCityWeather(lat, lon string) (*http.Response, error) {
 	params := url.Values{}
 	params.Set("lat", lat)
 	params.Set("lon", lon)

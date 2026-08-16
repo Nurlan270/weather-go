@@ -27,7 +27,7 @@ type LocationRepository interface {
 
 type LocationClient interface {
 	GetCitiesInfo(cityName string) (*http.Response, error)
-	GetCityWeather(cityName, lat, lon string) (*http.Response, error)
+	GetCityWeather(lat, lon string) (*http.Response, error)
 }
 
 type Service struct {
@@ -51,13 +51,18 @@ func (s *Service) SearchLocations(request request.SearchLocation) ([]*response.S
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, ErrNoResults
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unepected status code %d", resp.StatusCode)
 	}
 
 	var locations []*response.SearchLocation
 	if err = json.NewDecoder(resp.Body).Decode(&locations); err != nil {
-		return nil, fmt.Errorf("failed to decode location: %w", err)
+		return nil, fmt.Errorf("failed to decode locations: %w", err)
+	}
+
+	//	Nothing found
+	if len(locations) == 0 {
+		return nil, ErrNoResults
 	}
 
 	return locations, err
@@ -145,7 +150,7 @@ func (s *Service) fetchAndCacheLocation(userID int64, location entity.Location) 
 	lon := strconv.FormatFloat(location.Coordinates.Lon, 'f', -1, 64)
 
 	//	Call API to get fresh weather info
-	resp, err := s.client.GetCityWeather(location.Name, lat, lon)
+	resp, err := s.client.GetCityWeather(lat, lon)
 	if err != nil {
 		return entity.Location{}, fmt.Errorf("failed to fetch location: %w", err)
 	}
@@ -157,10 +162,14 @@ func (s *Service) fetchAndCacheLocation(userID int64, location entity.Location) 
 		return entity.Location{}, fmt.Errorf("failed to deserialize location: %w", err)
 	}
 
-	//	Re-assign API's ID to this app's ID
+	//	Re-assign ID from API to this app's ID
+	//	It's then used to delete location
 	result.ID = location.ID
 
-	//	Round values
+	//	Re-assign name to name from DB
+	result.Name = location.Name
+
+	//	Round temperature
 	result.Main.Temp = math.Round(result.Main.Temp)
 	result.Main.FeelsLike = math.Round(result.Main.FeelsLike)
 
