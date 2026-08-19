@@ -178,22 +178,10 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	//	Login user
 	session, err := h.service.LoginUser(user)
 
-	//	User doesn't exists
-	if errors.Is(err, ErrUserNotFound) {
+	//	Invalid credentials
+	if errors.Is(err, ErrInvalidCredentials) {
 		data.Old["login"] = login
-		data.Error.Message = view.MessageUserNotFound
-
-		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
-			h.log.ErrorRenderPage(err)
-		}
-
-		return
-	}
-
-	//	Invalid password
-	if errors.Is(err, ErrInvalidPassword) {
-		data.Old["login"] = login
-		data.Error.Message = view.MessageInvalidPassword
+		data.Error.Message = view.MessageInvalidCredentials
 
 		if err = h.renderer.RenderView(w, http.StatusUnprocessableEntity, VIEW, data); err != nil {
 			h.log.ErrorRenderPage(err)

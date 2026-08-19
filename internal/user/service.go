@@ -45,15 +45,6 @@ func (s *Service) GetUserBySID(sid string) (*entity.User, error) {
 	return u, err
 }
 
-func (s *Service) GetUserByLogin(login string) (*entity.User, error) {
-	u, err := s.repo.GetUserByLogin(login)
-	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrUserNotFound
-	}
-
-	return u, err
-}
-
 func (s *Service) RegisterUser(user request.RegisterUser) (*entity.Session, error) {
 	encryptedPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
 	if err != nil {
@@ -92,12 +83,12 @@ func (s *Service) LoginUser(user request.LoginUser) (*entity.Session, error) {
 
 	//	Check if user exists
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrUserNotFound
+		return nil, ErrInvalidCredentials
 	}
 
 	//	Check if password is valid
 	if err = bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(user.Password)); err != nil {
-		return nil, ErrInvalidPassword
+		return nil, ErrInvalidCredentials
 	}
 
 	//	All challenges passed -> Login User (create new session)
