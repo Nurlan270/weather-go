@@ -1,7 +1,7 @@
 package request
 
 type SearchLocation struct {
-	Query string `json:"query" validate:"required"`
+	Query string `json:"query" validate:"required,max=70"`
 }
 
 type AddLocation struct {

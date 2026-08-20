@@ -12,7 +12,7 @@ import (
 func GetSessionCookieName(sessName string) string {
 	s := strcase.ToSnake(strings.ToLower(sessName))
 
-	return s + "_session"
+	return strings.TrimRight(s, "_") + "_session"
 }
 
 func SetCookie(w http.ResponseWriter, name, value string, expiresAt time.Time) {

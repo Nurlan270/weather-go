@@ -6,6 +6,7 @@ PROJECT_BIN = $(PROJECT_DIR)/bin
 
 GOOSE = $(PROJECT_BIN)/goose
 LINTER = $(PROJECT_BIN)/golangci-lint
+MOCKERY = $(PROJECT_BIN)/mockery
 
 $(shell [ -d bin ] || mkdir -p $(PROJECT_BIN))
 
@@ -45,3 +46,14 @@ lint-file: install-linter
 
 lint-fmt: install-linter
 	$(LINTER) fmt
+
+.PHONY: install-mockery
+install-mockery:
+	@[ -f $(MOCKERY) ] || \
+	GOBIN=$(PROJECT_BIN) go install github.com/vektra/mockery/v3@v3.7.3
+
+mockery: install-mockery
+	$(MOCKERY)
+
+mockery-init:
+	$(MOCKERY) init github.com/Nurlan270/weather-go

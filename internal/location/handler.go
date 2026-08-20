@@ -57,7 +57,14 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 
 	//	Validate data
 	if err := h.validate.Struct(reqLocation); err != nil {
-		h.renderer.Redirect(w, r, "/")
+		vErrs := h.validate.MapErrors(err)
+
+		data.Error.Message = vErrs["Query"]
+
+		if err = h.renderer.RenderView(w, http.StatusNotFound, VIEW, data); err != nil {
+			h.log.ErrorRenderPage(err)
+		}
+
 		return
 	}
 
@@ -132,7 +139,7 @@ func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 	//	Add new location
 	err := h.service.AddLocation(u.ID, reqLocation)
 
-	if err != nil && !errors.Is(err, ErrLocationAlreadyExists) {
+	if err != nil {
 		h.log.Error("could not add location", zap.Error(err))
 
 		if err = h.renderer.RenderServerError(w, u.Login); err != nil {

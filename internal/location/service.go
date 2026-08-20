@@ -52,7 +52,7 @@ func (s *Service) SearchLocations(request request.SearchLocation) ([]*response.S
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unepected status code %d", resp.StatusCode)
+		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
 
 	var locations []*response.SearchLocation
@@ -82,7 +82,7 @@ func (s *Service) AddLocation(userID int64, request request.AddLocation) error {
 	if err = s.repo.CreateLocation(userID, request.Name, float64Lat, float64Lon); err != nil {
 		uniqErr := pq.As(err, pqerror.UniqueViolation)
 		if uniqErr != nil {
-			return ErrLocationAlreadyExists
+			return nil
 		}
 
 		return fmt.Errorf("failed to create location: %w", err)
