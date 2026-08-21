@@ -30,7 +30,7 @@ goose-reset: install-goose
 	$(GOOSE) reset
 
 goose-create: install-goose
-	$(GOOSE) create $(ARGS)
+	$(GOOSE) create $(name) sql
 
 .PHONY: install-linter
 install-linter:
@@ -42,7 +42,7 @@ lint: install-linter
 	$(LINTER) run
 
 lint-file: install-linter
-	$(LINTER) run $(FILE)
+	$(LINTER) run $(file)
 
 lint-fmt: install-linter
 	$(LINTER) fmt
