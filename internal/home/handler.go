@@ -37,7 +37,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 	locations, err := h.locationSvc.ListLocationsByUser(u)
 	if err != nil {
-		h.log.Error("list locations by user id failed", zap.Error(err))
+		h.log.Error("list locations by user failed", zap.Error(err))
 
 		_ = h.renderer.RenderServerError(w, u.Login)
 

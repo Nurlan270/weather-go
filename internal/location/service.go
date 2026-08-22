@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"sync"
 
 	"github.com/allegro/bigcache"
 	"github.com/lib/pq"
@@ -91,6 +92,11 @@ func (s *Service) AddLocation(userID int64, request request.AddLocation) error {
 	return nil
 }
 
+type fetchResult struct {
+	location entity.Location
+	err      error
+}
+
 func (s *Service) ListLocationsByUser(user *entity.User) ([]*entity.Location, error) {
 	// 1. Load IDs from DB
 	locationIDs, err := s.repo.ListLocationIdsByUserID(user.ID)
@@ -98,6 +104,8 @@ func (s *Service) ListLocationsByUser(user *entity.User) ([]*entity.Location, er
 		return nil, fmt.Errorf("failed to get locations from db: %w", err)
 	}
 
+	var wg sync.WaitGroup
+	resultCh := make(chan fetchResult, len(locationIDs))
 	result := make([]*entity.Location, 0, len(locationIDs))
 
 	for _, locationID := range locationIDs {
@@ -114,19 +122,39 @@ func (s *Service) ListLocationsByUser(user *entity.User) ([]*entity.Location, er
 			return nil, fmt.Errorf("failed to get location from cache: %w", err)
 		}
 
-		//	3. Cache miss: get location from DB
-		location, err = s.repo.GetLocationByID(locationID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get location by id %d: %w", locationID, err)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			//	3. Cache miss: get location from DB
+			location, err = s.repo.GetLocationByID(locationID)
+			if err != nil {
+				resultCh <- fetchResult{err: err}
+				return
+			}
+
+			//	4. Cache miss: call client and put data into cache
+			location, err = s.fetchAndCacheLocation(user.ID, location)
+			if err != nil {
+				resultCh <- fetchResult{err: err}
+				return
+			}
+
+			resultCh <- fetchResult{location: location}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultCh)
+	}()
+
+	for res := range resultCh {
+		if res.err != nil {
+			return nil, res.err
 		}
 
-		//	4. Cache miss: call client and put data into cache
-		location, err = s.fetchAndCacheLocation(user.ID, location)
-		if err != nil {
-			return nil, fmt.Errorf("failed to fetch and cache location by id %d: %w", locationID, err)
-		}
-
-		result = append(result, &location)
+		result = append(result, &res.location)
 	}
 
 	return result, nil

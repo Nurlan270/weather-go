@@ -138,7 +138,6 @@ func (h *Handler) AddLocation(w http.ResponseWriter, r *http.Request) {
 
 	//	Add new location
 	err := h.service.AddLocation(u.ID, reqLocation)
-
 	if err != nil {
 		h.log.Error("could not add location", zap.Error(err))
 
